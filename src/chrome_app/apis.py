@@ -23,10 +23,6 @@
   check; there are no guarantees that all APIs will be found.
 
   Can also be used from the command line.
-
-  Usage:
-    chrome_apis.py app_dir
-    chrome_apis.py -m apps_dir
 """
 
 from __future__ import print_function, division, unicode_literals
