@@ -4,3 +4,6 @@
 # Python bytecode
 *.pyc
 *.pyo
+
+# Library code
+src/js/lib/*
