@@ -39,6 +39,12 @@ import chrome_app.manifest
 POLYFILLS = {
 }
 
+# Manifest filename.
+MANIFEST_FILENAME = 'manifest.json'
+# TODO(alger): Split MANIFEST_FILENAME into one filename for Chrome Apps and one
+# for PWAs. This will require some rewriting of logic code as the current
+# implementation relies on these filenames being the same.
+
 # What the converter is called.
 CONVERTER_NAME = 'caterpillar'
 
@@ -172,6 +178,69 @@ def relative_boilerplate_file_path(filename):
   """
   return '{}/{}'.format(CONVERTER_NAME, filename)
 
+def polyfill_filename(api):
+  """
+  Gets the filename associated with an API polyfill.
+
+  Args:
+    api: String name of API.
+
+  Returns:
+    Filename of API polyfill.
+  """
+  return "{}.polyfill.js".format(api)
+
+def inject_tags(html, manifest, polyfills, html_filename):
+  """
+  Injects conversion HTML tags into the given HTML.
+
+  Args:
+    manifest: Manifest dictionary of the _Chrome App_.
+    html: String of HTML of start page.
+    polyfills: Polyfilled APIs to add script tags for.
+
+  Returns:
+    Modified HTML.
+  """
+  soup = bs4.BeautifulSoup(html)
+  
+  # Add manifest link.
+  manifest_link = soup.new_tag('link', rel='manifest',
+                               href=MANIFEST_FILENAME)
+  soup.head.append(manifest_link)
+  logging.debug('Injected manifest link into `%s`.', html_filename)
+
+  # Add polyfills.
+  for api in polyfills:
+    api_filename = polyfill_filename(api)
+    polyfill_script = soup.new_tag('script',
+      src=relative_boilerplate_file_path(api_filename))
+    # We want to put the polyfill script before the first script tag.
+    if soup.body.script:
+      soup.body.script.insert_before(polyfill_script)
+    else:
+      soup.body.append(polyfill_script)
+    logging.debug('Injected `%s` script into `%s`.', api_filename,
+                  html_filename)
+
+  # TODO(alger): Add service worker registration.
+
+  # Add meta tags (if applicable).
+  for tag in ('description', 'author', 'name'):
+    if tag in manifest:
+      meta = soup.new_tag('meta', content=manifest[tag])
+      meta['name'] = tag
+      soup.head.append(meta)
+      logging.debug('Injected `%s` meta tag into `%s` with content '
+        '`%s`.', tag, html_filename, manifest[tag])
+
+  # Add an encoding meta tag. (Seems to be implicit in Chrome Apps.)
+  meta_charset = soup.new_tag('meta', charset='utf-8')
+  soup.head.title.insert_before(meta_charset)
+  logging.debug('Injected `charset` meta tag into `%s`.', html_filename)
+
+  return soup.prettify('utf-8')
+
 def convert_app(input_dir, output_dir, config, force=False):
   """
   Converts a Chrome App into a progressive web app.
@@ -217,13 +286,22 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   # Convert the Chrome app manifest into a progressive web app manifest.
   pwa_manifest = ca_to_pwa_manifest(manifest, config)
-  pwa_manifest_path = os.path.join(output_dir, 'manifest.json')
+  pwa_manifest_path = os.path.join(output_dir, MANIFEST_FILENAME)
   with open(pwa_manifest_path, 'w') as pwa_manifest_file:
     json.dump(pwa_manifest, pwa_manifest_file, indent=4, sort_keys=True)
-  logging.debug('Wrote `manifest.json` to `%s`.', pwa_manifest_path)
+  logging.debug('Wrote `%s` to `%s`.', MANIFEST_FILENAME, pwa_manifest_path)
 
-  # TODO(alger): Inject tags into the HTML of the start file and write the HTML
-  # back to the output directory.
+  # Inject tags into the HTML of the start file.
+  start_path = os.path.join(output_dir, pwa_manifest['start_url'])
+  with open(start_path, 'r') as start_file:
+    start_html = inject_tags(start_file.read(), manifest, successful,
+                             start_path)
+
+  # Write the HTML back to the output directory.
+  with open(start_path, 'w') as start_file:
+    start_file.write(start_html)
+  logging.debug('Wrote edited and prettified start HTML to `%s`.', start_path)
+
   # TODO(alger): Copy service worker scripts.
 
   logging.info('Conversion complete.')
@@ -231,13 +309,10 @@ def convert_app(input_dir, output_dir, config, force=False):
 def main():
   desc = 'Semi-automatically convert Chrome Apps into progressive web apps.'
   parser = argparse.ArgumentParser(description=desc)
+  parser.add_argument('input', help='Chrome App input directory')
+  parser.add_argument('output', help='Progressive web app output directory')
   parser.add_argument('-c', '--config', help='Configuration file',
                       required=True, metavar='config')
-  parser.add_argument('-i', '--input', help='Chrome App input directory',
-                      required=True, metavar='input')
-  parser.add_argument('-o', '--output',
-                      help='Progressive web app output directory',
-                      required=True, metavar='output')
   parser.add_argument('-v', '--verbose', help='Verbose logging',
                       action='store_true')
   parser.add_argument('-f', '--force', help='Force output overwrite',
