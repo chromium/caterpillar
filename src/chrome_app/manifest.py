@@ -52,6 +52,10 @@ def verify(manifest):
   Raises:
     ValueError if the manifest is invalid.
   """
+  # Manifests must have a version.
+  if 'manifest_version' not in manifest:
+    raise ValueError('Chrome Apps must have manifest version 2.')
+
   # Manifests must be version 2.
   if manifest['manifest_version'] != 2:
     raise ValueError('Chrome Apps must have manifest version 2, found manifest '
