@@ -39,11 +39,9 @@ import chrome_app.manifest
 POLYFILLS = {
 }
 
-# Manifest filename.
-MANIFEST_FILENAME = 'manifest.json'
-# TODO(alger): Split MANIFEST_FILENAME into one filename for Chrome Apps and one
-# for PWAs. This will require some rewriting of logic code as the current
-# implementation relies on these filenames being the same.
+# Manifest filenames.
+CA_MANIFEST_FILENAME = chrome_app.manifest.MANIFEST_FILENAME
+PWA_MANIFEST_FILENAME = 'manifest.webmanifest'
 
 # What the converter is called.
 CONVERTER_NAME = 'caterpillar'
@@ -66,18 +64,28 @@ def setup_output_dir(input_dir, output_dir, force=False):
   Raises:
     ValueError: Invalid input or output directory.
   """
+  # Clean up the directory we want to set up.
   if force:
     logging.debug('Removing output directory tree `%s`.', output_dir)
     shutil.rmtree(output_dir, ignore_errors=True)
   elif os.path.exists(output_dir):
     raise ValueError('Output directory already exists.')
 
+  # Copy files across from the Chrome App.
   logging.debug('Copying input tree `%s` to output tree `%s`.', input_dir,
                 output_dir)
   shutil.copytree(input_dir, output_dir)
+
+  # Set up the boilerplate directory.
   conv_path = boilerplate_dir(output_dir)
   logging.debug('Making %s directory `%s`.', CONVERTER_NAME, conv_path)
   os.mkdir(conv_path)
+
+  # Clean up files we don't need in the PWA.
+  ca_manifest_path = os.path.join(output_dir, CA_MANIFEST_FILENAME)
+  logging.debug('Removing file `%s`.', ca_manifest_path)
+  os.remove(ca_manifest_path)
+
   logging.debug('Finished setting up output directory `%s`.', output_dir)
 
 def polyfill_apis(apis, directory):
@@ -206,7 +214,7 @@ def inject_tags(html, manifest, polyfills, html_filename):
   
   # Add manifest link.
   manifest_link = soup.new_tag('link', rel='manifest',
-                               href=MANIFEST_FILENAME)
+                               href=PWA_MANIFEST_FILENAME)
   soup.head.append(manifest_link)
   logging.debug('Injected manifest link into `%s`.', html_filename)
 
@@ -273,7 +281,7 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   # Read in and check the manifest file. Generate the new manifest from that.
   try:
-    manifest = chrome_app.manifest.get(output_dir)
+    manifest = chrome_app.manifest.get(input_dir)
   except ValueError as e:
     logging.error(e.message)
     return
@@ -286,10 +294,10 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   # Convert the Chrome app manifest into a progressive web app manifest.
   pwa_manifest = ca_to_pwa_manifest(manifest, config)
-  pwa_manifest_path = os.path.join(output_dir, MANIFEST_FILENAME)
+  pwa_manifest_path = os.path.join(output_dir, PWA_MANIFEST_FILENAME)
   with open(pwa_manifest_path, 'w') as pwa_manifest_file:
     json.dump(pwa_manifest, pwa_manifest_file, indent=4, sort_keys=True)
-  logging.debug('Wrote `%s` to `%s`.', MANIFEST_FILENAME, pwa_manifest_path)
+  logging.debug('Wrote `%s` to `%s`.', PWA_MANIFEST_FILENAME, pwa_manifest_path)
 
   # Inject tags into the HTML of the start file.
   start_path = os.path.join(output_dir, pwa_manifest['start_url'])

@@ -22,6 +22,9 @@ import json
 import logging
 import os
 
+# Chrome App manifest filename.
+MANIFEST_FILENAME = 'manifest.json'
+
 def get(directory):
   """
   Returns a directory's manifest file as a dictionary.
@@ -36,7 +39,7 @@ def get(directory):
     IOError if the directory does not contain a manifest file.
     ValueError if the manifest file is invalid.
   """
-  manifest_path = os.path.join(directory, 'manifest.json')
+  manifest_path = os.path.join(directory, MANIFEST_FILENAME)
   with open(manifest_path) as manifest_file:
     manifest = json.load(manifest_file)
 
