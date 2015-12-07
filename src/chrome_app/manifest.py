@@ -50,17 +50,21 @@ def verify(manifest):
     manifest: Manifest dictionary.
 
   Raises:
-    ValueError if the manifest is invalid.
+    ValueError if the manifest is invalid in a way that could break the
+      converter.
   """
   # Manifests must have a version.
   if 'manifest_version' not in manifest:
-    raise ValueError('Chrome Apps must have manifest version 2.')
+    logging.warning('Chrome Apps must have manifest version 2.')
+  else:
+    logging.debug('Manifest has a manifest version.')
+    # Manifests must be version 2.
+    if manifest['manifest_version'] != 2:
+      logging.warning('Chrome Apps must have manifest version 2, found manifest'
+        ' version %s.', manifest['manifest_version'])
+    else:
+      logging.debug('Found manifest version 2.')
 
-  # Manifests must be version 2.
-  if manifest['manifest_version'] != 2:
-    raise ValueError('Chrome Apps must have manifest version 2, found manifest '
-      'version {}.'.format(manifest['manifest_version']))
-  logging.debug('Found manifest version 2.')
 
   # The app/background is required.
   if 'app' not in manifest or 'background' not in manifest['app']:
@@ -68,11 +72,11 @@ def verify(manifest):
 
   # The name is required.
   if 'name' not in manifest:
-    raise ValueError('Chrome Apps must include a name.')
+    logging.warning('Chrome Apps must include a name.')
 
   # The version is required.
   if 'version' not in manifest:
-    raise ValueError('Chrome Apps must include a version.')
+    logging.warning('Chrome Apps must include a version.')
 
   # Warn on manifest members that won't be converted.
   included = {'manifest_version', 'app', 'name', 'version', 'short_name',
