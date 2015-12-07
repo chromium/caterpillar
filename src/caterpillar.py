@@ -236,7 +236,7 @@ def inject_tags(html, manifest, polyfills, html_filename):
 
   # Add an encoding meta tag. (Seems to be implicit in Chrome Apps.)
   meta_charset = soup.new_tag('meta', charset='utf-8')
-  soup.head.title.insert_before(meta_charset)
+  soup.head.insert(0, meta_charset)
   logging.debug('Injected `charset` meta tag into `%s`.', html_filename)
 
   return soup.prettify('utf-8')
