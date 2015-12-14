@@ -1,0 +1,7 @@
+{
+  "name": "caterpillar",
+  "dependencies": {
+    "qunit": "~1.20.0",
+    "sinon-1.17.2": "http://sinonjs.org/releases/sinon-1.17.2.js"
+  }
+}

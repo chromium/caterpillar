@@ -6,4 +6,4 @@
 *.pyo
 
 # Library code
-src/js/lib/*
+bower_components/*
