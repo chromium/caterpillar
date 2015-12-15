@@ -31,6 +31,7 @@ import shutil
 import sys
 
 import bs4
+import colorama
 
 import chrome_app.apis
 import chrome_app.manifest
@@ -314,6 +315,23 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   logging.info('Conversion complete.')
 
+class Formatter(logging.Formatter):
+  """
+  Caterpillar logging formatter.
+  """
+  def format(self, record):
+    style = ''
+    if record.levelno == logging.ERROR:
+      style = colorama.Fore.RED + colorama.Style.BRIGHT
+    elif record.levelno == logging.WARNING:
+      style = colorama.Fore.YELLOW + colorama.Style.BRIGHT
+    elif record.levelno == logging.INFO:
+      style = colorama.Fore.BLUE
+    elif record.levelno == logging.DEBUG:
+      style = colorama.Fore.CYAN + colorama.Style.DIM
+
+    return style + super(Formatter, self).format(record)
+
 def main():
   desc = 'Semi-automatically convert Chrome Apps into progressive web apps.'
   parser = argparse.ArgumentParser(description=desc)
@@ -327,12 +345,16 @@ def main():
                       action='store_true')
   args = parser.parse_args()
 
-  if args.verbose:
-    logging_level = logging.DEBUG
-  else:
-    logging_level = logging.INFO
+  logging_level = logging.DEBUG if args.verbose else logging.INFO
+  logging.root.setLevel(logging_level)
+
+  colorama.init(autoreset=True)
+
   logging_format = ':%(levelname)s:  \t%(message)s'
-  logging.basicConfig(level=logging_level, format=logging_format)
+  formatter = Formatter(logging_format)
+  handler = logging.StreamHandler(sys.stdout)
+  handler.setFormatter(formatter)
+  logging.root.addHandler(handler)
 
   with open(args.config) as config_file:
     config = json.load(config_file)
