@@ -32,7 +32,7 @@ import sys
 
 import bs4
 
-import chrome_apis
+import chrome_app.apis
 import chrome_app.manifest
 
 # Chrome APIs with polyfills available.
@@ -267,7 +267,7 @@ def convert_app(input_dir, output_dir, config, force=False):
     return
 
   # Initial pass to detect and polyfill Chrome Apps APIs.
-  apis = chrome_apis.app_apis(output_dir)
+  apis = chrome_app.apis.app_apis(output_dir)
   if apis:
     logging.info('Found Chrome APIs: %s', ', '.join(apis))
 
