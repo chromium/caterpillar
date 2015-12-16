@@ -311,6 +311,52 @@ def inject_tags(html, manifest, polyfills, html_filename):
 
   return soup.prettify('utf-8')
 
+def insert_todos_into_file(js_path):
+  """
+  Inserts TODO comments in a JavaScript file.
+
+  The TODO comments inserted should draw attention to places in the converted
+  app that the developer will need to edit to finish converting their app.
+
+  Args:
+    js_path: Path to JavaScript file.
+  """
+  with open(js_path, 'rU') as in_js:
+    # This search is very naïve and will only check line-by-line if there
+    # are easily spotted Chrome Apps API function calls.
+    out_js = []
+    for line_no, line in enumerate(in_js):
+      api_call = chrome_app.apis.api_function_called(line)
+      if api_call is not None:
+        # Construct a TODO comment.
+        todo = '// TODO: (Caterpillar) Remove {} call.\n'.format(api_call)
+        logging.debug('Inserting TODO in `%s:%d`:\n\t%s', js_path, line_no,
+                      todo)
+        out_js.append(todo)
+      out_js.append(line)
+
+  with open(js_path, 'w') as js_file:
+    logging.debug('Writing modified file `%s`.', js_path)
+    js_file.write(''.join(out_js))
+
+def insert_todos_into_directory(directory):
+  """
+  Inserts TODO comments in all JavaScript code in a directory.
+
+  The TODO comments inserted should draw attention to places in the converted
+  app that the developer will need to edit to finish converting their app.
+
+  Args:
+    directory: Directory filename to insert TODOs into.
+  """
+  logging.debug('Inserting TODOs.')
+  dirwalk = os.walk(directory)
+  for (dirpath, _, filenames) in dirwalk:
+    for filename in filenames:
+      if filename.endswith('.js'):
+        path = os.path.join(dirpath, filename)
+        insert_todos_into_file(path)
+
 def generate_service_worker(directory):
   """
   Generates code for a service worker.
@@ -436,6 +482,9 @@ def convert_app(input_dir, output_dir, config, force=False):
   logging.debug('Writing edited and prettified start HTML to `%s`.', start_path)
   with open(start_path, 'w') as start_file:
     start_file.write(start_html)
+
+  # Insert TODO comments into the output code.
+  insert_todos_into_directory(output_dir)
 
   # Copy service worker scripts.
   add_service_worker(output_dir)
