@@ -1,0 +1,4 @@
+caterpillar
+beautifulsoup4>=4.4.1
+colorama>=0.3.5
+mock>=1.0.1

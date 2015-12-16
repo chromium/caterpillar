@@ -7,6 +7,12 @@ this project investigates whether it is feasible to automatically port some
 run offline in Chrome and other modern browsers.  This code is extremely
 experimental and not intended for real-world use.
 
+## Installation
+
+Extract the code into a folder. Install dependencies with pip and bower:
+
+    $ pip install -r requirements.txt && bower install bower.json
+
 ## Disclaimer
 
 This is not an official Google product (experimental or otherwise), it is just
