@@ -442,6 +442,23 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   logging.info('Conversion complete.')
 
+def print_default_config():
+  """
+  Prints a default configuration file to stdout.
+  """
+  default_config = {
+    'start_url': 'index.html',
+    'name': 'My Chrome App',
+    'id': -1,
+    'root': '',
+    'boilerplate-dir': '/caterpillar/',
+    'update-uris': True,
+    'enable-watch-sw': True,
+    'report-path': 'caterpillar-report/'
+  }
+
+  json.dump(default_config, sys.stdout, sort_keys=True, indent=2)
+
 class Formatter(logging.Formatter):
   """
   Caterpillar logging formatter.
@@ -462,14 +479,24 @@ class Formatter(logging.Formatter):
 def main():
   desc = 'Semi-automatically convert Chrome Apps into progressive web apps.'
   parser = argparse.ArgumentParser(description=desc)
-  parser.add_argument('input', help='Chrome App input directory')
-  parser.add_argument('output', help='Progressive web app output directory')
-  parser.add_argument('-c', '--config', help='Configuration file',
-                      required=True, metavar='config')
   parser.add_argument('-v', '--verbose', help='Verbose logging',
                       action='store_true')
-  parser.add_argument('-f', '--force', help='Force output overwrite',
-                      action='store_true')
+
+  subparsers = parser.add_subparsers(dest='mode')
+
+  parser_convert = subparsers.add_parser(
+    'convert', help='Convert a Chrome App into a progressive web app.')
+  parser_convert.add_argument('input', help='Chrome App input directory')
+  parser_convert.add_argument(
+    'output', help='Progressive web app output directory')
+  parser_convert.add_argument('-c', '--config', help='Configuration file',
+                              required=True, metavar='config')
+  parser_convert.add_argument('-f', '--force', help='Force output overwrite',
+                              action='store_true')
+
+  parser_config = subparsers.add_parser(
+    'config', help='Print a default configuration file to stdout.')
+
   args = parser.parse_args()
 
   logging_level = logging.DEBUG if args.verbose else logging.INFO
@@ -483,10 +510,13 @@ def main():
   handler.setFormatter(formatter)
   logging.root.addHandler(handler)
 
-  with open(args.config) as config_file:
-    config = json.load(config_file)
+  if args.mode == 'config':
+    print_default_config()
+  elif args.mode == 'convert':
+    with open(args.config) as config_file:
+      config = json.load(config_file)
 
-  convert_app(args.input, args.output, config, args.force)
+    convert_app(args.input, args.output, config, args.force)
 
 if __name__ == '__main__':
   sys.exit(main())
