@@ -93,8 +93,7 @@ importScripts('{converter_name}/sw_static.js');
 """
 
 def setup_output_dir(input_dir, output_dir, force=False):
-  """
-  Sets up the output directory tree.
+  """Sets up the output directory tree.
 
   Copies all files from the input directory to the output directory, and creates
   a subdirectory for the boilerplate code.
@@ -132,8 +131,7 @@ def setup_output_dir(input_dir, output_dir, force=False):
   logging.debug('Finished setting up output directory `%s`.', output_dir)
 
 def polyfill_apis(apis, directory):
-  """
-  Copies polyfill scripts into a directory.
+  """Copies polyfill scripts into a directory.
 
   Args:
     apis: List of APIs to polyfill. Strings e.g. 'tts' for the chrome.tts API.
@@ -163,8 +161,7 @@ def polyfill_apis(apis, directory):
   return (successful, unsuccessful)
 
 def ca_to_pwa_manifest(manifest, config):
-  """
-  Converts a Chrome App manifest into a progressive web app manifest.
+  """Converts a Chrome App manifest into a progressive web app manifest.
 
   Args:
     manifest: Manifest dictionary.
@@ -202,8 +199,7 @@ def ca_to_pwa_manifest(manifest, config):
   return pwa_manifest
 
 def boilerplate_dir(directory):
-  """
-  Gets the path to the converter's boilerplate directory.
+  """Gets the path to the converter's boilerplate directory.
 
   Args:
     directory: Directory path of app.
@@ -214,8 +210,7 @@ def boilerplate_dir(directory):
   return os.path.join(directory, CONVERTER_NAME)
 
 def relative_boilerplate_file_path(filename):
-  """
-  Gets the path to a boilerplate file relative to the app root.
+  """Gets the path to a boilerplate file relative to the app root.
 
   Example:
     relative_boilerplate_file_path('tts.polyfill.js')
@@ -230,8 +225,7 @@ def relative_boilerplate_file_path(filename):
   return '{}/{}'.format(CONVERTER_NAME, filename)
 
 def polyfill_filename(api):
-  """
-  Gets the filename associated with an API polyfill.
+  """Gets the filename associated with an API polyfill.
 
   Args:
     api: String name of API.
@@ -242,8 +236,7 @@ def polyfill_filename(api):
   return "{}.polyfill.js".format(api)
 
 def inject_script_tag(soup, script_filename, html_filename):
-  """
-  Injects a script tag into an HTML document.
+  """Injects a script tag into an HTML document.
 
   Modifies the provided soup.
 
@@ -260,8 +253,7 @@ def inject_script_tag(soup, script_filename, html_filename):
                 html_filename)
 
 def inject_tags(html, manifest, polyfills, html_filename):
-  """
-  Injects conversion HTML tags into the given HTML.
+  """Injects conversion HTML tags into the given HTML.
 
   Args:
     manifest: Manifest dictionary of the _Chrome App_.
@@ -313,8 +305,7 @@ def inject_tags(html, manifest, polyfills, html_filename):
   return soup.prettify('utf-8')
 
 def insert_todos_into_file(js_path):
-  """
-  Inserts TODO comments in a JavaScript file.
+  """Inserts TODO comments in a JavaScript file.
 
   The TODO comments inserted should draw attention to places in the converted
   app that the developer will need to edit to finish converting their app.
@@ -341,8 +332,7 @@ def insert_todos_into_file(js_path):
     js_file.write(''.join(out_js))
 
 def insert_todos_into_directory(directory):
-  """
-  Inserts TODO comments in all JavaScript code in a directory.
+  """Inserts TODO comments in all JavaScript code in a directory.
 
   The TODO comments inserted should draw attention to places in the converted
   app that the developer will need to edit to finish converting their app.
@@ -359,8 +349,7 @@ def insert_todos_into_directory(directory):
         insert_todos_into_file(path)
 
 def generate_service_worker(directory):
-  """
-  Generates code for a service worker.
+  """Generates code for a service worker.
 
   Args:
     directory: Directory this service worker will run in.
@@ -391,8 +380,7 @@ def generate_service_worker(directory):
   return sw_js
 
 def copy_script(script, directory):
-  """
-  Copies a script into the given directory.
+  """Copies a script into the given directory.
 
   Args:
     script: Caterpillar boilerplate JavaScript filename.
@@ -404,8 +392,7 @@ def copy_script(script, directory):
   shutil.copyfile(path, new_path)
 
 def add_service_worker(directory):
-  """
-  Adds service worker scripts to the given directory.
+  """Adds service worker scripts to the given directory.
 
   Args:
     directory: Directory name to add service worker scripts to.
@@ -424,8 +411,7 @@ def add_service_worker(directory):
     sw_file.write(sw_js)
 
 def convert_app(input_dir, output_dir, config, force=False):
-  """
-  Converts a Chrome App into a progressive web app.
+  """Converts a Chrome App into a progressive web app.
 
   Args:
     input_dir: String path to input directory.
@@ -493,9 +479,7 @@ def convert_app(input_dir, output_dir, config, force=False):
   logging.info('Conversion complete.')
 
 def print_default_config():
-  """
-  Prints a default configuration file to stdout.
-  """
+  """Prints a default configuration file to stdout."""
   default_config = {
     'start_url': 'index.html',
     'name': 'My Chrome App',
@@ -510,8 +494,9 @@ def print_default_config():
   json.dump(default_config, sys.stdout, sort_keys=True, indent=2)
 
 class Formatter(logging.Formatter):
-  """
-  Caterpillar logging formatter.
+  """Caterpillar logging formatter.
+
+  Adds color to the logged information.
   """
   def format(self, record):
     style = ''
@@ -527,11 +512,12 @@ class Formatter(logging.Formatter):
     return style + super(Formatter, self).format(record)
 
 def main():
+  """Executes the script and handles command line arguments."""
+  # Set up parsers, then parse the command line arguments.
   desc = 'Semi-automatically convert Chrome Apps into progressive web apps.'
   parser = argparse.ArgumentParser(description=desc)
   parser.add_argument('-v', '--verbose', help='Verbose logging',
                       action='store_true')
-
   subparsers = parser.add_subparsers(dest='mode')
 
   parser_convert = subparsers.add_parser(
@@ -549,23 +535,22 @@ def main():
 
   args = parser.parse_args()
 
+  # Set up logging.
   logging_level = logging.DEBUG if args.verbose else logging.INFO
   logging.root.setLevel(logging_level)
-
   colorama.init(autoreset=True)
-
   logging_format = ':%(levelname)s:  \t%(message)s'
   formatter = Formatter(logging_format)
   handler = logging.StreamHandler(sys.stdout)
   handler.setFormatter(formatter)
   logging.root.addHandler(handler)
 
+  # Main program.
   if args.mode == 'config':
     print_default_config()
   elif args.mode == 'convert':
     with open(args.config) as config_file:
       config = json.load(config_file)
-
     convert_app(args.input, args.output, config, args.force)
 
 if __name__ == '__main__':

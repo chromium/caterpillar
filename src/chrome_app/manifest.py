@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Chrome App manifest verification and parsing.
-"""
+"""Chrome App manifest verification and parsing."""
 
 import json
 import logging
@@ -26,8 +25,7 @@ import os
 MANIFEST_FILENAME = 'manifest.json'
 
 def get(directory):
-  """
-  Returns a directory's manifest file as a dictionary.
+  """Returns a directory's manifest file as a dictionary.
 
   Args:
     directory: Path of directory the manifest is located in.
@@ -46,8 +44,7 @@ def get(directory):
   return manifest
 
 def verify(manifest):
-  """
-  Verifies that the manifest is valid.
+  """Verifies that the manifest is valid.
 
   Args:
     manifest: Manifest dictionary.

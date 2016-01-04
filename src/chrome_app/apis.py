@@ -17,12 +17,12 @@
 
 """Checks what Chrome APIs Chrome Apps are using.
 
-  Exports a function to walk an app directory and return a set of all Chrome
-  APIs used, and a function to walk a directory containing multiple apps and
-  return a list of (app name, app dir, API set) tuples. This is a pretty naive
-  check; there are no guarantees that all APIs will be found.
+Exports a function to walk an app directory and return a set of all Chrome
+APIs used, and a function to walk a directory containing multiple apps and
+return a list of (app name, app dir, API set) tuples. This is a pretty naive
+check; there are no guarantees that all APIs will be found.
 
-  Can also be used from the command line.
+Can also be used from the command line.
 """
 
 from __future__ import print_function, division, unicode_literals
@@ -45,8 +45,7 @@ CHROME_API_REGEX = re.compile(r'(?<![\w.])chrome\.((?:app\.)?\w+)')
 CHROME_API_CALL_REGEX = re.compile(r'(?<![\w.])chrome\.((?:\w+\.)+\w+)\(')
 
 def api_function_called(line):
-  """
-  Checks if a line of code calls a Chrome Apps API and returns the called
+  """Checks if a line of code calls a Chrome Apps API, and returns the called
   function name if applicable.
 
   Args:
@@ -62,8 +61,7 @@ def api_function_called(line):
   return call_match.group(1)
 
 def app_apis(directory):
-  """
-  Returns a set of Chrome APIs used in a given app directory.
+  """Returns a set of Chrome APIs used in a given app directory.
 
   Args:
     directory: App directory to search for Chrome APIs.
@@ -90,8 +88,7 @@ def app_apis(directory):
   return sorted(apis)
 
 def apps_apis(directory):
-  """
-  Find Chrome APIs used by each app in a directory of apps.
+  """Finds Chrome APIs used by each app in a directory of apps.
 
   Args:
     directory: Directory containing many app directories.
@@ -119,6 +116,8 @@ def apps_apis(directory):
       yield (name, path, apis)
 
 def main():
+  """Parses command line arguments and scans APIs based on these arguments.
+  """
   parser = argparse.ArgumentParser(description='Check what Chrome APIs Chrome '
     'Apps are using.')
   parser.add_argument('directory')
