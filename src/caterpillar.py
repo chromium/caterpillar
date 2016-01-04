@@ -39,6 +39,7 @@ import chrome_app.manifest
 
 # Chrome APIs with polyfills available.
 POLYFILLS = {
+  'tts',
 }
 
 # Manifest filenames.
