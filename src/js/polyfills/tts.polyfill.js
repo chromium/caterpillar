@@ -13,9 +13,7 @@
 // limitations under the License.
 
 /**
- * @file Polyfill for Chrome Apps' TTS API.
- * @version 1.0.0
- * @author alger@google.com
+ * Polyfill for Chrome Apps' TTS API.
  */
 
 /**
@@ -27,15 +25,10 @@
 
 'use strict';
 
-// Set up a namespace for the polyfill if necessary.
-if (!chrome) var chrome = {};
-if (!chrome.tts) {
-chrome.tts = {};
-(function() {
+if (!chrome.tts)
+  chrome.tts = {};
 
-if (!('speechSynthesis' in window)) {
-  throw new Error('SpeechSynthesis not supported in this browser.');
-}
+(function() {
 
 /**
  * An event from the TTS engine to communicate the status of an utterance.
@@ -284,4 +277,3 @@ chrome.tts.getVoices = function(opt_callback) {
 };
 
 }).call(this);
-}
