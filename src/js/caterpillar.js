@@ -20,7 +20,7 @@
 'use strict';
 
 // Set up a namespace if one doesn't already exist.
-if (!chrome) chrome = {};
+if (!('chrome' in self)) self.chrome = {};
 if (!chrome.caterpillar) chrome.caterpillar = {};
 
 (function() {
