@@ -1,0 +1,15 @@
+{
+  "name": "tts",
+  "status": "total",
+  "coverage": 0.98,
+  "dependencies": [],
+  "warnings": [
+    {
+      "member": "speak",
+      "status": "total",
+      "text": ["No longer supports extension ID.",
+               "No longer supports gender.",
+               "No longer supports required event types."],
+    },
+  ],
+}
