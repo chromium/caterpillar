@@ -1,6 +1,3 @@
-# Keep this file out of the repository until we have a public code review site.
-/codereview.settings
-
 # Python bytecode
 *.pyc
 *.pyo
