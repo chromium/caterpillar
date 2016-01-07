@@ -139,7 +139,7 @@ chrome.notifications.create = function(opt_notificationId, options,
   if (opt_notificationId === undefined) {
     // Math.random is notoriously bad at random numbers, but we don't care very
     // much about collisions.
-    opt_notificationId = Math.round(Math.random() * MAX_NOTIFICATION_ID);
+    opt_notificationId = Math.round(Math.random() * MAX_NOTIFICATION_ID) + '';
   }
 
   // TODO(alger): Make this work in Firefox.
