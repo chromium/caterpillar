@@ -483,13 +483,11 @@ def print_default_config():
   """Prints a default configuration file to stdout."""
   default_config = {
     'start_url': 'index.html',
-    'name': 'My Chrome App',
     'id': -1,
     'root': '',
-    'boilerplate-dir': '/caterpillar/',
-    'update-uris': True,
-    'enable-watch-sw': True,
-    'report-path': 'caterpillar-report/'
+    'boilerplate_dir': 'caterpillar',
+    'update_uris': True,
+    'report_dir': 'caterpillar-report'
   }
 
   json.dump(default_config, sys.stdout, sort_keys=True, indent=2)
