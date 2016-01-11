@@ -16,13 +16,6 @@
  * Polyfill for Chrome Apps' TTS API.
  */
 
-/**
- * Differences between the CA API and the polyfill.
- *
- * Missing functionality:
- *  speak no longer supports an extension ID, gender, or requiring event types.
- */
-
 'use strict';
 
 if (!chrome.tts)

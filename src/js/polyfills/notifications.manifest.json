@@ -1,0 +1,25 @@
+{
+  "name": "notifications",
+  "status": "partial",
+  "coverage": 0.60,
+  "dependencies": [],
+  "warnings": [
+    "NotificationOptions.appIconMaskUrl",
+    "NotificationOptions.priority",
+    "NotificationOptions.buttons",
+    "NotificationOptions.imageUrl",
+    "NotificationOptions.isClickable",
+    {
+        "member": "NotificationOptions.contextMessage",
+        "status": "total",
+        "text": "Used, but not differentiated from the message itself."
+    },
+    "TemplateType.image",
+    "TemplateType.list",
+    {
+      "member": "TemplateType.progress",
+      "status": "total",
+      "text": "Does not display a visual progress bar, and instead uses a textual percentage."
+    }
+  ]
+}

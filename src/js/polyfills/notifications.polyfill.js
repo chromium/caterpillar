@@ -16,28 +16,11 @@
  * Polyfill for Chrome Apps' notifications API.
  */
 
-/**
- * Differences between the CA API and the polyfill.
- *
- * Missing functionality:
- *   NotificationOptions.appIconMaskUrl is ignored
- *   NotificationOptions.priority is ignored
- *   NotificationOptions.buttons is ignored
- *   NotificationOptions.imageUrl is ignored
- *   NotificationOptions.items is ignored
- *   NotificationOptions.isClickable is ignored
- *   NotificationOptions.contextMessage is used but not differentiated from the
- *     message itself.
- *   List and image notifications are not available
- *   Buttons cannot be placed on notifications
- *   Progress bars have been replaced with progress percentages of the form
- *     Progress: x%
- */
-
 'use strict';
 
 // Set up a namespace for the polyfill if necessary.
-if (!chrome.notifications) chrome.notifications = {};
+if (!chrome.notifications)
+  chrome.notifications = {};
 
 (function() {
 
