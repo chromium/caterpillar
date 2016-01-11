@@ -13,25 +13,10 @@
 // limitations under the License.
 
 /**
- * @file Tests for the polyfill for Chrome Apps' runtime API.
- * @author alger@google.com
+ * Tests for the polyfill for Chrome Apps' runtime API.
  */
 
 'use strict';
-
-// Test caterpillar loaded okay.
-QUnit.test('caterpillar loaded', assert => {
-  assert.ok('chrome' in window, 'found chrome');
-  assert.ok('caterpillar' in chrome, 'found chrome.caterpillar');
-});
-
-QUnit.test('Message', assert => {
-  var m = new chrome.caterpillar.Message(
-    chrome.caterpillar.MessageType.NOTIFICATION, []);
-  assert.equal(m.type, chrome.caterpillar.MessageType.NOTIFICATION);
-  assert.deepEqual(m.args, []);
-  assert.equal(m.toString(), 'chrome.caterpillar.Message(notification, [...])');
-});
 
 QUnit.test('setError sets an error if runtime is loaded', assert => {
   if (!chrome.runtime)

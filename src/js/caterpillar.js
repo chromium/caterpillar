@@ -13,67 +13,19 @@
 // limitations under the License.
 
 /**
- * @file Common utilities and types for caterpillar.
- * @author alger@google.com
+ * Common utilities and types for caterpillar.
  */
 
 'use strict';
 
 // Set up a namespace if one doesn't already exist.
-if (!('chrome' in self)) self.chrome = {};
-if (!chrome.caterpillar) chrome.caterpillar = {};
+if (!('chrome' in self))
+  self.chrome = {};
+
+if (!chrome.caterpillar)
+  chrome.caterpillar = {};
 
 (function() {
-
-/**
- * Enumeration of types that caterpillar Messages can be.
- */
-chrome.caterpillar.MessageType = {
-  // Internal communication for emulating notifications.
-  NOTIFICATION: 'notification',
-  // Internal communication for emulating runtime.sendMessage.
-  BACKGROUND: 'background'
-};
-
-/**
- * Message sent between a webpage and its service worker as part of caterpillar
- * internals.
- */
-chrome.caterpillar.Message = class {
-  /**
-   * @param {chrome.caterpillar.MessageType} type Type of message being sent.
-   * @param {any[]} args Arguments to any functions called by the service
-   *     worker as part of handling this message.
-   * @param {function} callback Function to call after the message is handled.
-   */
-  constructor(type, args, callback) {
-    this.type = type;
-    this.args = args;
-    this.callback = callback;
-    this.caterpillar = true; // Identify this object as a caterpillar Message.
-  }
-
-  /**
-   * @returns {string} A string representation of this message.
-   */
-  toString() {
-    return 'chrome.caterpillar.Message(' + this.type + ', [...])';
-  }
-
-  /**
-   * Convert a Chrome Apps background message into a Caterpillar Message.
-   *
-   * @param {any} message The message sent by the Chrome Apps API.
-   * @param {function} callback Function called after caterpillar Message is
-   *     handled.
-   *
-   * @returns {chrome.caterpillar.Message}
-   */
-  static fromBackgroundMessage(message, callback) {
-    return new chrome.caterpillar.Message(
-      chrome.caterpillar.MessageType.BACKGROUND, [message], callback);
-  }
-};
 
 /**
  * Sets an error message in lastError if chrome.runtime is loaded.
