@@ -3,7 +3,7 @@
 Given the recent interest in [progressive web
 apps](https://infrequently.org/2015/06/progressive-apps-escaping-tabs-without-losing-our-soul/),
 this project investigates whether it is feasible to automatically port some
-[Chrome apps](https://developer.chrome.com/apps/about_apps) to web sites that
+[Chrome Apps](https://developer.chrome.com/apps/about_apps) to web sites that
 run offline in Chrome and other modern browsers.  This code is extremely
 experimental and not intended for real-world use.
 
