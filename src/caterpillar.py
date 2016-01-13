@@ -408,6 +408,7 @@ def edit_code(output_dir, required_js_paths, ca_manifest, config):
 
   # Walk the app for JS and HTML.
   # Insert TODOs into JS.
+  # Inject script and meta tags into HTML.
   dirwalk = os.walk(output_dir)
   for (dirpath, _, filenames) in dirwalk:
     for filename in filenames:
@@ -415,18 +416,16 @@ def edit_code(output_dir, required_js_paths, ca_manifest, config):
       root_path = os.path.relpath(output_dir, dirpath)
       if filename.endswith('.js'):
         insert_todos_into_file(path)
-
-  # Inject script and meta tags into start HTML.
-  path = os.path.join(output_dir, config['start_url'])
-  with open(path) as html_file:
-    logging.debug('Editing `%s`.', path)
-    soup = bs4.BeautifulSoup(html_file.read())
-    inject_script_tags(soup, required_js_paths, root_path,
-                       config['boilerplate_dir'], path)
-    inject_misc_tags(soup, ca_manifest, root_path, path)
-    logging.debug('Writing edited and prettified `%s`.', path)
-    with open(path, 'w') as html_file:
-      html_file.write(soup.prettify())
+      elif filename.endswith('.html'):
+        logging.debug('Editing `%s`.', path)
+        with open(path) as html_file:
+          soup = bs4.BeautifulSoup(html_file.read())
+        inject_script_tags(soup, required_js_paths, root_path,
+                           config['boilerplate_dir'], path)
+        inject_misc_tags(soup, ca_manifest, root_path, path)
+        logging.debug('Writing edited and prettified `%s`.', path)
+        with open(path, 'w') as html_file:
+          html_file.write(soup.prettify())
 
 # Main functions.
 
