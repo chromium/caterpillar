@@ -126,52 +126,44 @@ def setup_output_dir(input_dir, output_dir, boilerplate_dir, force=False):
   conv_dir = os.path.join(output_dir, boilerplate_dir)
   logging.debug('Making Caterpillar directory `%s`.', conv_dir)
   os.mkdir(conv_dir)
-
-  # TODO(alger): Cleanup manifest and background scripts.
+  polyfill_dir = os.path.join(conv_dir, 'polyfills')
+  os.mkdir(polyfill_dir)
 
   logging.debug('Finished setting up output directory `%s`.', output_dir)
 
-def polyfill_apis(apis, output_dir, boilerplate_dir):
-  """Copies polyfill scripts from Caterpillar into a web app.
+def cleanup_output_dir(output_dir):
+  """Clean up the output web app by removing unnecessary files.
 
   Args:
-    apis: List of APIs to polyfill. Strings e.g. 'tts' for the chrome.tts API.
-    output_dir: Directory of web app to copy polyfill scripts into.
-    boilerplate_dir: Caterpillar script directory within the web app.
-
-  Returns:
-    (sorted list of successfully polyfilled APIs,
-     sorted list of unsuccessfully polyfilled APIs)
+    output_dir: Path to output web app directory.
   """
-  successful = []
-  unsuccessful = []
+  logging.debug('Deleting Chrome App manifest `%s`.', CA_MANIFEST_FILENAME)
+  os.remove(os.path.join(output_dir, CA_MANIFEST_FILENAME))
 
-  for api in apis:
-    if api not in POLYFILLS:
-      unsuccessful.append(api)
-      continue
-
-    filename = polyfill_filename(api)
-    polyfill_path = os.path.join(
-      SCRIPT_DIR, 'js', 'polyfills', filename)
-    destination_path = os.path.join(
-      output_dir, boilerplate_dir, filename)
-    shutil.copyfile(polyfill_path, destination_path)
-    successful.append(api)
-
-  successful.sort()
-  unsuccessful.sort()
-  return (successful, unsuccessful)
-
-def ca_to_pwa_manifest(manifest, config):
-  """Converts a Chrome App manifest into a progressive web app manifest.
+def copy_static_code(static_code_paths, output_dir, boilerplate_dir):
+  """Copies static scripts from Caterpillar into a web app.
 
   Args:
-    manifest: Manifest dictionary.
-    config: Conversion configuration dictionary.
+    static_code_paths: List of paths to scripts to copy, relative to
+      Caterpillar's JS source folder.
+    output_dir: Directory of web app to copy scripts into.
+    boilerplate_dir: Caterpillar script directory within the web app.
+  """
+  for static_code_path in static_code_paths:
+    source_path = os.path.join(SCRIPT_DIR, 'js', static_code_path)
+    destination_path = os.path.join(output_dir, boilerplate_dir,
+                                    static_code_path)
+    shutil.copyfile(source_path, destination_path)
+
+def generate_web_manifest(manifest, start_url):
+  """Generates a progressive web app manifest based on a Chrome App manifest.
+
+  Args:
+    manifest: Chrome App manifest dictionary.
+    start_url: URL of start page.
 
   Returns:
-    PWA manifest.
+    Web manifest JSON dictionary.
   """
   pwa_manifest = {}
   pwa_manifest['name'] = manifest['name']
@@ -182,7 +174,7 @@ def ca_to_pwa_manifest(manifest, config):
   pwa_manifest['display'] = 'minimal-ui'
   pwa_manifest['orientation'] = 'any'
   # TODO(alger): Guess start_url from chrome.app.window.create calls
-  pwa_manifest['start_url'] = config['start_url']
+  pwa_manifest['start_url'] = start_url
   # TODO(alger): Guess background/theme colour from the main page's CSS.
   pwa_manifest['theme_color'] = 'white'
   pwa_manifest['background_color'] = 'white'
@@ -212,76 +204,67 @@ def polyfill_filename(api):
   """
   return "{}.polyfill.js".format(api)
 
-def inject_script_tag(soup, script_filename, html_filename, boilerplate_dir):
-  """Injects a script tag into an HTML document.
-
-  Modifies the provided soup.
+def inject_script_tags(soup, required_js_paths, root_path, boilerplate_dir,
+    html_path):
+  """
+  Injects script tags into an HTML document.
 
   Args:
-    soup: BeautifulSoup of the HTML.
-    script_filename: Filename of the src of the script tag.
-    html_filename: Filename of the HTML document being modified.
-    boilerplate_dir: Caterpillar script directory within the output app.
+    soup: BeautifulSoup HTML document. Will be modified.
+    required_js_paths: Paths to required script files, relative to Caterpillar's
+      boilerplate script directory. These will be injected in order.
+    root_path: Path to the root directory of the web app from this HTML file.
+      This can be either absolute or relative.
+    boilerplate_dir: Caterpillar script directory within the web app.
+    html_path: Path to the HTML document being modified.
   """
+  if not required_js_paths:
+    return  # Guarantees we have at least one script tag to inject.
 
-  relative_path = os.path.join(boilerplate_dir, script_filename)
-  script = soup.new_tag('script', src=relative_path)
-  soup.body.append(script)
-  logging.debug('Injected `%s` script into `%s`.', script_filename,
-                html_filename)
+  # These scripts should come before the first script tag in the document.
+  # That script tag *should* be in the body, but it could be anywhere, so we
+  # have to search the whole file.
+  scripts = soup('script')
+  first_script = scripts[0] if scripts else None
 
-def inject_tags(html, manifest, polyfills, html_filename, boilerplate_dir):
-  """Injects conversion HTML tags into the given HTML.
-
-  Args:
-    html: String of HTML of start page.
-    manifest: Manifest dictionary of the _Chrome App_.
-    polyfills: Polyfilled APIs to add script tags for.
-    html_filename: Filename of the start page.
-    boilerplate_dir: Caterpillar script directory within the output app.
-
-  Returns:
-    Modified HTML.
-  """
-  soup = bs4.BeautifulSoup(html)
-  
-  # Add manifest link.
-  manifest_link = soup.new_tag('link', rel='manifest',
-                               href=PWA_MANIFEST_FILENAME)
-  soup.head.append(manifest_link)
-  logging.debug('Injected manifest link into `%s`.', html_filename)
-
-  # Add polyfills.
-  for api in polyfills:
-    api_filename = polyfill_filename(api)
-    polyfill_script = soup.new_tag('script',
-      src=os.path.join(boilerplate_dir, api_filename))
-    # We want to put the polyfill script before the first script tag.
-    if soup.body.script:
-      soup.body.script.insert_before(polyfill_script)
+  # Insert the script tags in order.
+  for script_path in reversed(required_js_paths):
+    path = os.path.join(root_path, boilerplate_dir, script_path)
+    script = soup.new_tag('script', src=path)
+    if first_script is None:
+      soup.body.append(script)
     else:
-      soup.body.append(polyfill_script)
-    logging.debug('Injected `%s` script into `%s`.', api_filename,
-                  html_filename)
+      first_script.insert_before(script)
+    first_script = script
+    logging.debug('Injected `%s` script into `%s`.', script_path, html_path)
 
-  # Add service worker registration.
-  inject_script_tag(soup, REGISTER_SCRIPT_NAME, html_filename, boilerplate_dir)
+def inject_misc_tags(soup, ca_manifest, root_path, html_path):
+  """
+  Injects meta and link tags into an HTML document.
 
-  # Add meta tags (if applicable).
+  Args:
+    soup: BeautifulSoup HTML document. Will be modified.
+    ca_manifest: Manifest dictionary of _Chrome App_.
+    root_path: Path to the root directory of the web app from this HTML file.
+      This can be either absolute or relative.
+    html_path: Path to the HTML document being modified.
+  """
+  # Add manifest link tag.
+  manifest_path = os.path.join(root_path, PWA_MANIFEST_FILENAME)
+  manifest_link = soup.new_tag('link', rel='manifest', href=manifest_path)
+  soup.head.append(manifest_link)
+
+  # Add meta tags.
   for tag in ('description', 'author', 'name'):
-    if tag in manifest:
-      meta = soup.new_tag('meta', content=manifest[tag])
+    if tag in ca_manifest:
+      meta = soup.new_tag('meta', content=ca_manifest[tag])
       meta['name'] = tag
       soup.head.append(meta)
-      logging.debug('Injected `%s` meta tag into `%s` with content '
-        '`%s`.', tag, html_filename, manifest[tag])
-
-  # Add an encoding meta tag. (Seems to be implicit in Chrome Apps.)
+      logging.debug('Injected `%s` tag into `%s` with content `%s`.', tag,
+        html_path, ca_manifest[tag])
   meta_charset = soup.new_tag('meta', charset='utf-8')
   soup.head.insert(0, meta_charset)
-  logging.debug('Injected `charset` meta tag into `%s`.', html_filename)
-
-  return soup.prettify('utf-8')
+  # TODO(alger): Don't insert the meta tags if they already exist.
 
 def insert_todos_into_file(js_path):
   """Inserts TODO comments in a JavaScript file.
@@ -351,6 +334,8 @@ def generate_service_worker(output_dir, boilerplate_dir):
 
   logging.debug('Generating service worker.')
 
+  # TODO(alger): Include background scripts.
+
   sw_js = SW_FORMAT_STRING.format(
     cache_version=random.randrange(MAX_CACHE_VERSION),
     joined_filepaths=',\n  '.join(all_filepaths),
@@ -391,6 +376,60 @@ def add_service_worker(output_dir, boilerplate_dir):
   with open(sw_path, 'w') as sw_file:
     sw_file.write(sw_js)
 
+def polyfill_paths(apis):
+  """Returns a list of paths of polyfills of the given APIs.
+
+  Args:
+    apis: List of Chrome Apps API names. Examples: chrome.tts is 'tts';
+      chrome.app.runtime is 'app.runtime'.
+
+  Returns:
+    List of paths to polyfills, relative to Caterpillar.
+
+  Raises:
+    ValueError if an API cannot be polyfilled.
+  """
+  return [os.path.join('polyfills', polyfill_filename(api))
+          for api in apis]
+
+def edit_code(output_dir, required_js_paths, ca_manifest, config):
+  """Directly edits the code of the output web app.
+
+  All editing of user code should be called from this function.
+
+  Args:
+    output_dir: Path to web app.
+    required_js_paths: Paths of scripts to be included in the web app, relative
+      to Caterpillar's boilerplate directory in the output web app.
+    ca_manifest: Manifest dictionary of the _Chrome App_.
+    config: Configuration dictionary.
+  """
+  logging.debug('Editing web app code.')
+
+  # Walk the app for JS and HTML.
+  # Insert TODOs into JS.
+  dirwalk = os.walk(output_dir)
+  for (dirpath, _, filenames) in dirwalk:
+    for filename in filenames:
+      path = os.path.join(dirpath, filename)
+      root_path = os.path.relpath(output_dir, dirpath)
+      if filename.endswith('.js'):
+        insert_todos_into_file(path)
+
+  # Inject script and meta tags into start HTML.
+  path = os.path.join(output_dir, config['start_url'])
+  with open(path) as html_file:
+    logging.debug('Editing `%s`.', path)
+    soup = bs4.BeautifulSoup(html_file.read())
+    inject_script_tags(soup, required_js_paths, root_path,
+                       config['boilerplate_dir'], path)
+    inject_misc_tags(soup, ca_manifest, root_path, path)
+    logging.debug('Writing edited and prettified `%s`.', path)
+    with open(path, 'w') as html_file:
+      html_file.write(soup.prettify())
+
+# Main functions.
+
 def convert_app(input_dir, output_dir, config, force=False):
   """Converts a Chrome App into a progressive web app.
 
@@ -408,46 +447,65 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   boilerplate_dir = config['boilerplate_dir']
 
-  # Initial pass to detect and polyfill Chrome Apps APIs.
+  # Determine which Chrome Apps APIs are being used in the Chrome App.
   apis = chrome_app.apis.app_apis(output_dir)
   if apis:
     logging.info('Found Chrome APIs: %s', ', '.join(apis))
 
-  successful, unsuccessful = polyfill_apis(apis, output_dir, boilerplate_dir)
-  if successful:
-    logging.info('Polyfilled Chrome APIs: %s', ', '.join(successful))
-  if unsuccessful:
-    logging.warning(
-      'Could not polyfill Chrome APIs: %s', ', '.join(unsuccessful))
+  # Determine which Chrome Apps APIs can be polyfilled, and which cannot.
+  polyfillable = []
+  not_polyfillable = []
+  for api in apis:
+    if api in POLYFILLS:
+      polyfillable.append(api)
+    else:
+      not_polyfillable.append(api)
 
-  # Read in and check the manifest file. Generate the new manifest from that.
+  logging.info('Polyfilled Chrome APIs: %s', ', '.join(polyfillable))
+  logging.warning('Could not polyfill Chrome APIs: %s',
+                  ', '.join(not_polyfillable))
+
+  # List of paths of static code to be copied from Caterpillar into the output
+  # web app, relative to Caterpillar's JS source directory.
+  required_js_paths = [
+    'caterpillar.js',
+    'register_sw.js',
+    'sw_static.js',
+  ] + polyfill_paths(polyfillable)
+
+  # Read in and check the manifest file.
   try:
-    manifest = chrome_app.manifest.get(input_dir)
-    chrome_app.manifest.verify(manifest)
+    ca_manifest = chrome_app.manifest.get(input_dir)
+    chrome_app.manifest.verify(ca_manifest)
   except ValueError as e:
     logging.error(e.message)
     return
 
-  # Convert the Chrome app manifest into a progressive web app manifest.
-  pwa_manifest = ca_to_pwa_manifest(manifest, config)
+  # TODO(alger): Identify background scripts and determine start_url.
+  start_url = config['start_url']
+  logging.info('Got start URL from config file: `%s`', start_url)
+
+  # Generate a progressive web app manifest.
+  pwa_manifest = generate_web_manifest(ca_manifest, start_url)
   pwa_manifest_path = os.path.join(output_dir, PWA_MANIFEST_FILENAME)
   with open(pwa_manifest_path, 'w') as pwa_manifest_file:
     json.dump(pwa_manifest, pwa_manifest_file, indent=4, sort_keys=True)
   logging.debug('Wrote `%s` to `%s`.', PWA_MANIFEST_FILENAME, pwa_manifest_path)
 
-  # Inject tags into the HTML of the start file.
-  start_path = os.path.join(output_dir, pwa_manifest['start_url'])
-  with open(start_path, 'r') as start_file:
-    start_html = inject_tags(start_file.read(), manifest, successful,
-                             start_path, boilerplate_dir)
+  # Remove unnecessary files from the output web app. This must be done before
+  # the service worker is generated, or these files will be cached.
+  cleanup_output_dir(output_dir)
 
-  # Write the HTML back to the output directory.
-  logging.debug('Writing edited and prettified start HTML to `%s`.', start_path)
-  with open(start_path, 'w') as start_file:
-    start_file.write(start_html)
+  # Edit the HTML and JS code of the output web app.
+  # This is adding TODOs, injecting tags, etc. - anything that involves editing
+  # user code directly. This must be done before the static code is copied
+  # across, or the polyfills will have TODOs added to them.
+  edit_code(output_dir, polyfillable, ca_manifest, config)
 
-  # Insert TODO comments into the output code.
-  insert_todos_into_directory(output_dir)
+  # Copy static code from Caterpillar into the output web app.
+  # This must be done before the service worker is generated, or these files
+  # will not be cached.
+  copy_static_code(required_js_paths, output_dir, boilerplate_dir)
 
   # Copy service worker scripts.
   add_service_worker(output_dir, boilerplate_dir)
