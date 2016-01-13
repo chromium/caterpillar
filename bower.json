@@ -1,7 +1,7 @@
 {
-  "name": "caterpillar",
+  "name": "Caterpillar",
   "dependencies": {
-    "qunit": "~1.20.0",
-    "sinon-1.17.2": "http://sinonjs.org/releases/sinon-1.17.2.js"
-  }
+  },
+  "license": "Apache-2.0",
+  "private": true
 }

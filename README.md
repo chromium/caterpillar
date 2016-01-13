@@ -9,9 +9,9 @@ experimental and not intended for real-world use.
 
 ## Installation
 
-Extract the code into a folder. Install dependencies with pip and bower:
+Extract the code into a folder. Install dependencies with pip and npm:
 
-    $ pip install -r requirements.txt && bower install bower.json
+    $ pip install -r requirements.txt && npm install
 
 ## Disclaimer
 
