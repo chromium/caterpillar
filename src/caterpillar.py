@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Semi-automatically convert Chrome Apps into progressive web apps.
+"""Semi-automatically converts Chrome Apps into progressive web apps.
 
 Guides a developer through converting their existing Chrome App into a
 progressive web app.
@@ -36,6 +36,7 @@ import colorama
 
 import chrome_app.apis
 import chrome_app.manifest
+import configuration
 
 # Chrome APIs with polyfills available.
 POLYFILLS = {
@@ -479,19 +480,6 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   logging.info('Conversion complete.')
 
-def print_default_config():
-  """Prints a default configuration file to stdout."""
-  default_config = {
-    'start_url': 'index.html',
-    'id': -1,
-    'root': '',
-    'boilerplate_dir': 'caterpillar',
-    'update_uris': True,
-    'report_dir': 'caterpillar-report'
-  }
-
-  json.dump(default_config, sys.stdout, sort_keys=True, indent=2)
-
 class Formatter(logging.Formatter):
   """Caterpillar logging formatter.
 
@@ -531,6 +519,10 @@ def main():
 
   parser_config = subparsers.add_parser(
     'config', help='Print a default configuration file to stdout.')
+  parser_config.add_argument('output', help='Output config file path')
+  parser_config.add_argument('-i', '--interactive',
+    help='Whether to interactively generate the config file',
+    action='store_true')
 
   args = parser.parse_args()
 
@@ -546,10 +538,10 @@ def main():
 
   # Main program.
   if args.mode == 'config':
-    print_default_config()
+    configuration.generate_and_save(args.output, args.interactive)
+
   elif args.mode == 'convert':
-    with open(args.config) as config_file:
-      config = json.load(config_file)
+    config = configuration.load(args.config)
     convert_app(args.input, args.output, config, args.force)
 
 if __name__ == '__main__':
