@@ -238,15 +238,10 @@ chrome.tts.resume = function() {
  *
  * @param {function=} opt_callback Callback function taking a boolean of whether
  *     or not the speech engine is currently speaking.
- *
- * @returns Whether or not the speech engine is currently speaking.
  */
 chrome.tts.isSpeaking = function(opt_callback) {
-  if (opt_callback) {
+  if (opt_callback)
     opt_callback(speechSynthesis.speaking);
-  }
-
-  return speechSynthesis.speaking;
 };
 
 /**
@@ -271,7 +266,6 @@ chrome.tts.getVoices = function(opt_callback) {
   var voices = speechSynthesis.getVoices().map(toTtsVoice);
   if (opt_callback)
     opt_callback(voices);
-  return voices;
 };
 
 }).call(this);
