@@ -100,6 +100,11 @@ chrome.tts.TtsVoice = class {
  * @param {function=} opt_callback Called right away, before speech finishes.
  */
 chrome.tts.speak = function(utterance, opt_options, opt_callback) {
+  // Juggle arguments.
+  if (!(opt_options && opt_callback) && (typeof opt_options === 'function')) {
+    opt_callback = opt_options;
+    opt_options = undefined;
+  }
   var msg = new SpeechSynthesisUtterance(utterance);
 
   // enqueue option.
@@ -199,7 +204,7 @@ chrome.tts.speak = function(utterance, opt_options, opt_callback) {
   // TODO(alger): Catch errors and store in chrome.runtime.lastError.
 
   // callback option.
-  if (opt_options && opt_options.opt_callback)
+  if (opt_callback)
     opt_callback();
 };
 
