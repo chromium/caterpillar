@@ -280,10 +280,10 @@ def insert_todos_into_file(js_path):
     # are easily spotted Chrome Apps API function calls.
     out_js = []
     for line_no, line in enumerate(in_js):
-      api_call = chrome_app.apis.api_function_called(line)
+      api_call = chrome_app.apis.api_member_used(line)
       if api_call is not None:
         # Construct a TODO comment.
-        todo = '// TODO: (Caterpillar) Remove {} call.\n'.format(api_call)
+        todo = '// TODO(Caterpillar): Check usage of {}.\n'.format(api_call)
         logging.debug('Inserting TODO in `%s:%d`:\n\t%s', js_path, line_no,
                       todo)
         out_js.append(todo)

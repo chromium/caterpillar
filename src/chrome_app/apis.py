@@ -40,25 +40,26 @@ import manifest as app_manifest
 # chrome.app.window.
 CHROME_API_REGEX = re.compile(r'(?<![\w.])chrome\.((?:app\.)?\w+)')
 
-# Regular expression matching Chrome apps API function calls, e.g.
+# Regular expression matching Chrome apps API usage, e.g.
 # chrome.tts.speak and chrome.app.runtime.onLaunched.addListener.
-CHROME_API_CALL_REGEX = re.compile(r'(?<![\w.])chrome\.((?:\w+\.)+\w+)\(')
+CHROME_API_USAGE_REGEX = re.compile(r'(?<![\w.])chrome\.((?:\w+\.)+\w+)')
 
-def api_function_called(line):
-  """Checks if a line of code calls a Chrome Apps API, and returns the called
-  function name if applicable.
+def api_member_used(line):
+  """
+  Checks if a line of code uses a Chrome Apps API and returns the used member
+  name if applicable.
 
   Args:
     line: String line of code.
 
   Returns:
-    None or string function name.
+    None or string member name.
   """
-  call_match = CHROME_API_CALL_REGEX.search(line)
-  if not call_match:
+  use_match = CHROME_API_USAGE_REGEX.search(line)
+  if not use_match:
     return None
 
-  return call_match.group(1)
+  return use_match.group(1)
 
 def app_apis(directory):
   """Returns a set of Chrome APIs used in a given app directory.
