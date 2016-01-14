@@ -254,17 +254,17 @@ def inject_misc_tags(soup, ca_manifest, root_path, html_path):
   manifest_link = soup.new_tag('link', rel='manifest', href=manifest_path)
   soup.head.append(manifest_link)
 
-  # Add meta tags.
+  # Add meta tags (if they don't already exist).
   for tag in ('description', 'author', 'name'):
-    if tag in ca_manifest:
+    if tag in ca_manifest and not soup('meta', {'name': tag}):
       meta = soup.new_tag('meta', content=ca_manifest[tag])
       meta['name'] = tag
       soup.head.append(meta)
       logging.debug('Injected `%s` tag into `%s` with content `%s`.', tag,
         html_path, ca_manifest[tag])
-  meta_charset = soup.new_tag('meta', charset='utf-8')
-  soup.head.insert(0, meta_charset)
-  # TODO(alger): Don't insert the meta tags if they already exist.
+  if not soup('meta', {'charset': True}):
+    meta_charset = soup.new_tag('meta', charset='utf-8')
+    soup.head.insert(0, meta_charset)
 
 def insert_todos_into_file(js_path):
   """Inserts TODO comments in a JavaScript file.
