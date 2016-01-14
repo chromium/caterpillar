@@ -42,6 +42,7 @@ import configuration
 POLYFILLS = {
   'notifications',
   'tts',
+  'storage'
 }
 
 # Manifest filenames.

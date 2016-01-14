@@ -1,0 +1,30 @@
+{
+  "name": "storage",
+  "status": "total",
+  "coverage": 0.71,
+  "dependencies": [
+    {
+      "name": "localforage",
+      "path": "dist/localforage.min.js",
+      "manager": "npm",
+    }],
+  "warnings": [
+    {
+      "member": "sync",
+      "status": "partial",
+      "text": "has been replaced with chrome.storage.local. Storage will no longer be synchronised with Chrome profiles, and instead will fallback to storing locally.",
+    },
+    "sync.QUOTA_BYTES",
+    "sync.QUOTA_BYTES_PER_ITEM",
+    "sync.MAX_ITEMS",
+    "sync.MAX_WRITE_OPERATIONS_PER_HOUR",
+    "sync.MAX_WRITE_OPERATIONS_PER_MINUTE",
+    "sync.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE"
+    "local.QUOTA_BYTES",
+    {
+      "member": "managed",
+      "status": "partial",
+      "text": "has been replaced with chrome.storage.local. Calls will no longer be read-only.",
+    },
+  ],
+}
