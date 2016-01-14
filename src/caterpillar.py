@@ -88,7 +88,21 @@ var CACHED_FILES = [
   {joined_filepaths}
 ];
 
+importScripts('{boilerplate_dir}/caterpillar.js');
 importScripts('{boilerplate_dir}/sw_static.js');
+
+// Ignore calls to chrome.app.runtime.onLaunched.addListener from the background
+// scripts.
+chrome.app = {{
+  runtime: {{
+    onLaunched: {{
+      addListener: function() {{}}
+    }}
+  }}
+}};
+
+// TODO: (Caterpillar) Edit background scripts to remove chrome.app.runtime
+// dependence.
 """
 
 def setup_output_dir(input_dir, output_dir, boilerplate_dir, force=False):
@@ -153,6 +167,7 @@ def copy_static_code(static_code_paths, output_dir, boilerplate_dir):
     source_path = os.path.join(SCRIPT_DIR, 'js', static_code_path)
     destination_path = os.path.join(output_dir, boilerplate_dir,
                                     static_code_path)
+    logging.debug('Copying `%s` to `%s`.', source_path, destination_path)
     shutil.copyfile(source_path, destination_path)
 
 def generate_web_manifest(manifest, start_url):
@@ -227,8 +242,11 @@ def inject_script_tags(soup, required_js_paths, root_path, boilerplate_dir,
   scripts = soup('script')
   first_script = scripts[0] if scripts else None
 
+  logging.debug('Requiring scripts: %s', ', '.join(required_js_paths))
+
   # Insert the script tags in order.
   for script_path in reversed(required_js_paths):
+    logging.debug('Inserting `%s` script tag.', script_path)
     path = os.path.join(root_path, boilerplate_dir, script_path)
     script = soup.new_tag('script', src=path)
     if first_script is None:
@@ -310,11 +328,16 @@ def insert_todos_into_directory(output_dir):
         path = os.path.join(dirpath, filename)
         insert_todos_into_file(path)
 
-def generate_service_worker(output_dir, boilerplate_dir):
+def generate_service_worker(output_dir, ca_manifest, polyfill_paths,
+                            boilerplate_dir):
   """Generates code for a service worker.
 
   Args:
     output_dir: Directory of the web app that this service worker will run in.
+    ca_manifest: Chrome App manifest dictionary.
+    polyfill_paths: List of paths to required polyfill scripts, relative to the
+      boilerplate directory.
+    boilerplate_dir: Caterpillar script directory within output web app.
 
   Returns:
     JavaScript string.
@@ -330,17 +353,26 @@ def generate_service_worker(output_dir, boilerplate_dir):
       for filename in filenames)
   logging.debug('Cached files:\n\t%s', '\n\t'.join(all_filepaths))
   # Format the file paths as JavaScript strings.
-  all_filepaths = ['"{}"'.format(fp) for fp in all_filepaths]
+  all_filepaths = ["'{}'".format(fp) for fp in all_filepaths]
 
   logging.debug('Generating service worker.')
-
-  # TODO(alger): Include background scripts.
 
   sw_js = SW_FORMAT_STRING.format(
     cache_version=random.randrange(MAX_CACHE_VERSION),
     joined_filepaths=',\n  '.join(all_filepaths),
     boilerplate_dir=boilerplate_dir
   )
+
+  # The polyfills we get as input are relative to the boilerplate directory, but
+  # the service worker is in the root directory, so we need to change the paths.
+  polyfills_paths = [os.path.join(boilerplate_dir, path)
+                     for path in polyfill_paths]
+
+  background_scripts = ca_manifest['app']['background'].get('scripts', [])
+  for script in polyfill_paths + background_scripts:
+    logging.debug('Importing `%s` to the service worker.', script)
+    sw_js += "importScripts('{}');\n".format(script)
+
   return sw_js
 
 def copy_script(script, directory):
@@ -355,11 +387,15 @@ def copy_script(script, directory):
   logging.debug('Writing `%s` to `%s`.', path, new_path)
   shutil.copyfile(path, new_path)
 
-def add_service_worker(output_dir, boilerplate_dir):
+def add_service_worker(output_dir, ca_manifest, polyfill_paths,
+                       boilerplate_dir):
   """Adds service worker scripts to a web app.
 
   Args:
     output_dir: Path to web app to add service worker scripts to.
+    ca_manifest: Chrome App manifest dictionary.
+    polyfill_paths: List of paths to required polyfill scripts, relative to the
+      boilerplate directory.
     boilerplate_dir: Caterpillar script directory within web app.
   """
   # We have to copy the other scripts before we generate the service worker
@@ -368,7 +404,8 @@ def add_service_worker(output_dir, boilerplate_dir):
   copy_script(REGISTER_SCRIPT_NAME, boilerplate_path)
   copy_script(SW_STATIC_SCRIPT_NAME, boilerplate_path)
 
-  sw_js = generate_service_worker(output_dir, boilerplate_dir)
+  sw_js = generate_service_worker(output_dir, ca_manifest, polyfill_paths,
+                                  boilerplate_dir)
 
   # We can now write the service worker. Note that it must be in the root.
   sw_path = os.path.join(output_dir, SW_SCRIPT_NAME)
@@ -468,8 +505,7 @@ def convert_app(input_dir, output_dir, config, force=False):
   # web app, relative to Caterpillar's JS source directory.
   required_js_paths = [
     'caterpillar.js',
-    'register_sw.js',
-    'sw_static.js',
+    REGISTER_SCRIPT_NAME,
   ] + polyfill_paths(polyfillable)
 
   # Read in and check the manifest file.
@@ -501,13 +537,19 @@ def convert_app(input_dir, output_dir, config, force=False):
   # across, or the polyfills will have TODOs added to them.
   edit_code(output_dir, polyfillable, ca_manifest, config)
 
+  # We want the static SW file to be copied in too, so we add it here.
+  # We have to add it after edit_code or it would be included in the HTML, but
+  # this is service worker-only code, and shouldn't be included there.
+  required_js_paths.append(SW_STATIC_SCRIPT_NAME)
+
   # Copy static code from Caterpillar into the output web app.
   # This must be done before the service worker is generated, or these files
   # will not be cached.
   copy_static_code(required_js_paths, output_dir, boilerplate_dir)
 
-  # Copy service worker scripts.
-  add_service_worker(output_dir, boilerplate_dir)
+  # Generate and write a service worker.
+  add_service_worker(output_dir, ca_manifest, polyfill_paths(polyfillable),
+                     boilerplate_dir)
 
   logging.info('Conversion complete.')
 
