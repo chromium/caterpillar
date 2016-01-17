@@ -20,6 +20,11 @@
       "member": "TemplateType.progress",
       "status": "total",
       "text": "Does not display a visual progress bar, and instead uses a textual percentage."
+    },
+    {
+      "member": "getAll",
+      "status": "total",
+      "text": "Will only get notifications sent from the current self (i.e. from the current window or service worker)."
     }
   ]
 }
