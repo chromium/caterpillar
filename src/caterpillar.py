@@ -41,6 +41,7 @@ import configuration
 # Chrome APIs with polyfills available.
 POLYFILLS = {
   'notifications',
+  'power',
   'storage',
   'tts',
 }

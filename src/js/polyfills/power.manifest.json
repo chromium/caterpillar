@@ -1,0 +1,18 @@
+{
+  "name": "power",
+  "status": "partial",
+  "coverage": 0.00,
+  "dependencies": [],
+  "warnings": [
+    {
+      "member": "requestKeepAwake",
+      "status": "none",
+      "text": "Does nothing."
+    },
+    {
+      "member": "releaseKeepAwake",
+      "status": "none",
+      "text": "Does nothing."
+    }
+  ]
+}
