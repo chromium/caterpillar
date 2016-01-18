@@ -13,7 +13,9 @@
 // limitations under the License.
 
 /**
- * Common utilities and types for caterpillar.
+ * Common utilities and types for Caterpillar.
+ *
+ * Must be included before any Caterpillar polyfills.
  */
 
 'use strict';

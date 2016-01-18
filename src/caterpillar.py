@@ -42,6 +42,7 @@ import configuration
 POLYFILLS = {
   'notifications',
   'power',
+  'runtime',
   'storage',
   'tts',
 }

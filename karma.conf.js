@@ -20,6 +20,8 @@ module.exports = function(config) {
     frameworks: ['qunit', 'sinon'],
     files: [
       'src/js/caterpillar.js',
+      'node_modules/platform/platform.js',
+      'tests/test_app_minimal/app.info.js',
       'src/js/polyfills/*.polyfill.js',
       'tests/**/*.test.js'
     ],

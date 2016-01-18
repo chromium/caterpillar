@@ -1,0 +1,38 @@
+{
+  "name": "runtime",
+  "status": "partial",
+  "coverage": 0.44,
+  "dependencies": [
+    {
+      "name": "platform",
+      "path": "platform.js",
+      "manager": "npm"
+    }
+  ],
+  "warnings": [
+    "getBackgroundPage",
+    "connect",
+    "connectNative",
+    "getPackageDirectoryEntry",
+    "Port",
+    "MessageSender",
+    "sendMessage",
+    "sendNativeMessage",
+    "onStartup",
+    "onInstalled",
+    "onSuspend",
+    "onSuspendCanceled",
+    "onUpdateAvailable",
+    "onBrowserUpdateAvailable",
+    "onConnect",
+    "onConnectExternal",
+    "onMessage",
+    "onMessageExternal",
+    "onRestartRequired",
+    {
+      "member": "getPlatformInfo",
+      "status": "partial",
+      "text": "Not guaranteed to return correct results."
+    }
+  ]
+}
