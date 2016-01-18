@@ -154,6 +154,8 @@ QUnit.module('storage', {
     afterEach: function() {
       sandbox.restore();
       localforage.willError = false;
+      localforage.clear();
+      chrome.caterpillar.storage.resetOnChangedListenersForTests();
     }
 });
 
@@ -250,4 +252,166 @@ QUnit.test('get can get key value pairs with defaults', function(assert) {
   });
 });
 
-// TODO(alger): Test onChanged using set and remove.
+QUnit.test('getBytesInUse sets an error', function(assert) {
+  var done = assert.async();
+  chrome.storage.local.getBytesInUse([], function() {
+    assert.equal(chrome.caterpillar.setError.args[0][0],
+                 'getBytesInUse not implemented.');
+    done();
+  });
+});
+
+QUnit.test('getBytesInUse juggles arguments', function(assert) {
+  var done = assert.async();
+  chrome.storage.local.getBytesInUse(done);
+  assert.expect(0);
+});
+
+QUnit.test('can set key/value pairs', function(assert) {
+  var done = assert.async();
+  chrome.storage.local.set({'hello': 'world', 'test': 123}, function() {
+    localforage.getItem('hello')
+        .then(function(value) {
+          assert.strictEqual(value, 'world');
+          return localforage.getItem('test');
+        })
+        .then(function(value) {
+          assert.strictEqual(value, 123);
+          done();
+        });
+  });
+});
+
+QUnit.test('can remove a single item', function(assert) {
+  var done = assert.async();
+  chrome.storage.local.remove('test1', function() {
+    localforage.getItem('test1').then(function(value) {
+      assert.strictEqual(value, null);
+      done();
+    });
+  });
+});
+
+QUnit.test('can remove multiple items', function(assert) {
+  var done = assert.async();
+  chrome.storage.local.remove(['test1', 'test2'], function() {
+    localforage.getItem('test1')
+        .then(function(value) {
+          assert.strictEqual(value, null);
+          return localforage.getItem('test2');
+        })
+        .then(function(value) {
+          assert.strictEqual(value, null);
+          done();
+        });
+  });
+});
+
+QUnit.test('can clear all items', function(assert) {
+  var done = assert.async();
+  chrome.storage.local.clear(function() {
+    localforage.getItem('test1')
+        .then(function(value) {
+          assert.strictEqual(value, null);
+          return localforage.getItem('test2');
+        })
+        .then(function(value) {
+          assert.strictEqual(value, null);
+          done();
+        });
+  });
+});
+
+QUnit.test('set runs onChanged handlers', function(assert) {
+  var done = assert.async();
+  chrome.storage.onChanged.addListener(function(changes) {
+    assert.strictEqual(changes['test1'].oldValue, 123);
+    assert.strictEqual(changes['test1'].newValue, 'hello');
+    done();
+  });
+  chrome.storage.local.set({'test1': 'hello'});
+});
+
+QUnit.test('set runs multiple onChanged handlers', function(assert) {
+  assert.expect(0);
+  var done = assert.async(2);
+  chrome.storage.onChanged.addListener(function(changes) {
+    done();
+  });
+  chrome.storage.onChanged.addListener(function(changes) {
+    done();
+  });
+  chrome.storage.local.set({'test1': 'hello'});
+});
+
+QUnit.test('removing 1 key runs onChanged handlers', function(assert) {
+  var done = assert.async();
+  chrome.storage.onChanged.addListener(function(changes) {
+    assert.strictEqual(changes['test1'].oldValue, 123);
+    assert.strictEqual(changes['test1'].newValue, null);
+    done();
+  });
+  chrome.storage.local.remove('test1');
+});
+
+QUnit.test('removing 1 key runs multiple onChanged handlers', function(assert) {
+  assert.expect(0);
+  var done = assert.async(2);
+  chrome.storage.onChanged.addListener(function(changes) {
+    done();
+  });
+  chrome.storage.onChanged.addListener(function(changes) {
+    done();
+  });
+  chrome.storage.local.remove('test1');
+});
+
+QUnit.test('removing multiple keys runs onChanged handlers', function(assert) {
+  var done = assert.async();
+  chrome.storage.onChanged.addListener(function(changes) {
+    assert.strictEqual(changes['test1'].oldValue, 123);
+    assert.strictEqual(changes['test1'].newValue, null);
+    assert.strictEqual(changes['test2'].oldValue, '456');
+    assert.strictEqual(changes['test2'].newValue, null);
+    done();
+  });
+  chrome.storage.local.remove(['test1', 'test2']);
+});
+
+QUnit.test('removing multiple keys runs multiple onChanged handlers',
+    function(assert) {
+      assert.expect(0);
+      var done = assert.async(2);
+      chrome.storage.onChanged.addListener(function(changes) {
+        done();
+      });
+      chrome.storage.onChanged.addListener(function(changes) {
+        done();
+      });
+      chrome.storage.local.remove('test1');
+    }
+);
+
+QUnit.test('clearing runs onChanged handlers', function(assert) {
+  var done = assert.async();
+  chrome.storage.onChanged.addListener(function(changes) {
+    assert.strictEqual(changes['test1'].oldValue, 123);
+    assert.strictEqual(changes['test1'].newValue, null);
+    assert.strictEqual(changes['test2'].oldValue, '456');
+    assert.strictEqual(changes['test2'].newValue, null);
+    done();
+  });
+  chrome.storage.local.clear();
+});
+
+QUnit.test('clearing runs multiple onChanged handlers', function(assert) {
+  assert.expect(0);
+  var done = assert.async(2);
+  chrome.storage.onChanged.addListener(function(changes) {
+    done();
+  });
+  chrome.storage.onChanged.addListener(function(changes) {
+    done();
+  });
+  chrome.storage.local.clear();
+});

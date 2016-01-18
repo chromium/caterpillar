@@ -21,6 +21,8 @@
 if (!chrome.storage)
   chrome.storage = {};
 
+chrome.caterpillar.storage = {};
+
 (function() {
 
 /**
@@ -38,6 +40,11 @@ function triggerOnChanged(items) {
 };
 
 /**
+ * Stores onChanged event listeners.
+ */
+var onChangedListeners = [];
+
+/**
  * Represents a change in stored data.
  */
 chrome.storage.StorageChange = class {
@@ -48,7 +55,7 @@ chrome.storage.StorageChange = class {
   constructor(opt_oldValue, opt_newValue) {
     this.oldValue = opt_oldValue;
     this.newValue = opt_newValue;
-  };
+  }
 };
 
 /**
@@ -60,13 +67,13 @@ chrome.storage.StorageArea = class {
   /**
    * Gets one or more items from storage.
    *
-   * @param {string | string[] | object} opt_keys A single key to get, list
+   * @param {string= | string[]= | object=} opt_keys A single key to get, list
    *     of keys to get, or a dictionary specifying default values. Empty lists
    *     or objects return empty results. Pass null to get all contents.
    * @param {function} callback Callback with storage items, or on failure.
    */
   get(opt_keys, callback) {
-    // Handle the optional argument being *first*.
+    // Juggle arguments.
     if (callback === undefined) {
       // Keys wasn't actually given, the callback was.
       callback = opt_keys;
@@ -84,6 +91,9 @@ chrome.storage.StorageArea = class {
        chrome.caterpillar.setError('Error retrieving values: ' + err);
        callback();
     }
+
+    if (typeof opt_keys === 'string')
+      opt_keys = [opt_keys];
 
     if (opt_keys === null) {
       // null input; get all key/value pairs.
@@ -105,13 +115,6 @@ chrome.storage.StorageArea = class {
             callback(items);
           })
           .catch(handleError);
-    } else if (typeof opt_keys === 'string') {
-      // String input; get associated value of the key.
-      localforage.getItem(opt_keys).then(value => {
-        var items = {};
-        items[opt_keys] = value;
-        callback(items);
-      }).catch(handleError);
     } else {
       // Object input; get associated values with defaults.
       var keys = Object.keys(opt_keys);
@@ -128,6 +131,121 @@ chrome.storage.StorageArea = class {
             callback(items);
           })
           .catch(handleError);
+    }
+  }
+
+  /**
+   * Gets the amount of space (in bytes) being used by one or more items.
+   *
+   * Not implemented in this polyfill.
+   *
+   * @param {string= | string[]= | object=} opt_keys A single key to get,
+   *     list of keys to get, or a dictionary specifying default values. Empty
+   *      lists or objects return 0. Pass null to get total usage.
+   * @param {function} callback Callback with bytes in use, or failure.
+   */
+  getBytesInUse(opt_keys, callback) {
+    // Juggle arguments.
+    if (callback === undefined) {
+      callback = opt_keys;
+      opt_keys = null;
+    }
+    // IndexedDB doesn't support this, so neither does localforage.
+    chrome.caterpillar.setError('getBytesInUse not implemented.');
+    callback();
+  }
+
+  /**
+   * Sets multiple items.
+   *
+   * @param {object} items An object which gives key/value pairs to update
+   *     storage with. Other key/value pairs in storage will not be affected.
+   * @param {function=} opt_callback Callback on success or failure.
+   */
+  set(items, opt_callback) {
+    var keys = Object.keys(items);
+    try {
+      // We need to trigger an event containing all the old values and new values.
+      // To do that, we first need the old values.
+      this.get(keys, function (oldItems) {
+        // Now that we have the old values, we can set the new values.
+        Promise.all(keys.map(key => localforage.setItem(key, items[key])))
+            // Then setup the input and trigger the event.
+            .then(function() {
+              var changes = {};
+              for (var key of keys) {
+                changes[key] = new chrome.storage.StorageChange(
+                    oldItems[key], items[key]);
+              }
+              triggerOnChanged(changes);
+              if (opt_callback)
+                opt_callback();
+            });
+      });
+    } catch (e) {
+      chrome.caterpillar.setError('Error setting values: ' + (e.message || e));
+      if (opt_callback)
+        opt_callback();
+    }
+  }
+
+  /**
+   * Removes one or more items from storage.
+   *
+   * @param {string || string[]} keys A single key or a list of keys to
+   *     remove.
+   * @param {function=} opt_callback Callback on success or failure.
+   */
+  remove(keys, opt_callback) {
+    var handleError = function(err) {
+      chrome.caterpillar.setError('Error removing keys: ' + err);
+      if (opt_callback)
+        opt_callback();
+    };
+    try {
+      this.get(keys, function(items) {
+        if (typeof keys === 'string')
+          keys = [keys];
+
+        Promise.all(keys.map(key => localforage.removeItem(key)))
+            .then(function() {
+              var changes = {};
+              for (var key of keys) {
+                changes[key] = new chrome.storage.StorageChange(
+                    items[key], null);
+              }
+              triggerOnChanged(changes);
+              if (opt_callback)
+                opt_callback();
+            })
+      });
+    } catch (e) {
+      handleError(e.message || e);
+    }
+  }
+
+  /**
+   * Removes all items from storage.
+   *
+   * @param {function=} opt_callback Callback on success or failure.
+   */
+  clear(opt_callback) {
+    try {
+      this.get(function(items) {
+        var changes = {};
+        for (var key in items) {
+          changes[key] = new chrome.storage.StorageChange(items[key], null);
+        }
+        localforage.clear().then(function() {
+          triggerOnChanged(changes);
+          if (opt_callback)
+            opt_callback();
+        });
+      });
+    } catch (e) {
+      chrome.caterpillar.setError('Error clearing values: ' + (e.message || e));
+      if (opt_callback)
+        opt_callback();
     }
   }
 };
@@ -157,13 +275,27 @@ chrome.storage.onChanged = {};
 /**
  * Adds an event listener for the onChanged event.
  *
- * @param {function} callback Function taking a changes object of key/value
- *     pairs.
+ * @param {function} callback Function taking an object mapping changed keys to
+ *     StorageChanges and an area name (though the latter will always be null).
  */
 chrome.storage.onChanged.addListener = function(callback) {
-  self.addEventListener('chrome.storage.onChanged', e => {
-    callback(e.detail);
-  });
+  var listener = function(e) {
+    callback(e.detail, null);
+  };
+
+  self.addEventListener('chrome.storage.onChanged', listener);
+  onChangedListeners.push(listener);
+};
+
+/**
+ * Resets onChanged event listeners. Used for testing.
+ */
+chrome.caterpillar.storage.resetOnChangedListenersForTests = function() {
+  for (var listener of onChangedListeners) {
+    self.removeEventListener('chrome.storage.onChanged', listener);
+  }
+
+  onChangedListeners.length = 0;
 };
 
 }).call(this);

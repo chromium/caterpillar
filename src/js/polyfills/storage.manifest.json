@@ -12,7 +12,7 @@
     {
       "member": "sync",
       "status": "partial",
-      "text": "has been replaced with chrome.storage.local. Storage will no longer be synchronised with Chrome profiles, and instead will fallback to storing locally.",
+      "text": "Replaced with chrome.storage.local. Storage will no longer be synchronised with Chrome profiles, and instead will fallback to storing locally.",
     },
     "sync.QUOTA_BYTES",
     "sync.QUOTA_BYTES_PER_ITEM",
@@ -24,7 +24,12 @@
     {
       "member": "managed",
       "status": "partial",
-      "text": "has been replaced with chrome.storage.local. Calls will no longer be read-only.",
+      "text": "Replaced with chrome.storage.local. Calls will no longer be read-only.",
     },
-  ],
+    {
+      "member": "onChanged.addListener",
+      "status": "total",
+      "text": "A null area name will be given to the callback."
+    }
+  ]
 }
