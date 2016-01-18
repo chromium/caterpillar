@@ -161,8 +161,13 @@ chrome.tts.speak = function(utterance, opt_options, opt_callback) {
         // resume -> resume
         // mark -> marker
         // boundary -> word || sentence
-        // There is no SpeechSynthesis equivalent for chrome.tts' cancelled and
-        // interrupted events.
+        // TtsEvents with no SpeechSynthesisEvent equivalent:
+        // interrupted, cancelled
+        // These are kind of both bundled up in SpeechSynthesis.cancel, so
+        // there's not a lot we can do about them.
+        if (event.type === 'interrupted' || event.type === 'cancelled')
+          return;
+  
         var type = event.type;
         if (type === 'mark') {
           type = 'marker';
@@ -247,7 +252,11 @@ chrome.tts.isSpeaking = function(opt_callback) {
 /**
  * Convert a SpeechSynthesisVoice into a TtsVoice.
  *
+ * Only used internally by the polyfill.
+ *
  * @param {SpeechSynthesisVoice} voice Voice to convert.
+ *
+ * @returns chrome.tts.TtsVoice
  */
 var toTtsVoice = function(voice) {
   return new chrome.tts.TtsVoice(voice.name, voice.lang, null,
