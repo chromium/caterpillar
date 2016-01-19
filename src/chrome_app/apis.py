@@ -38,7 +38,8 @@ import manifest as app_manifest
 
 # Regular expression matching Chrome API namespaces, e.g. chrome.tts and
 # chrome.app.window.
-CHROME_API_REGEX = re.compile(r'(?<![\w.])chrome\.((?:app\.)?\w+)')
+CHROME_API_REGEX = re.compile(
+  r'(?<![\w.])chrome\.((?:(?:app|sockets|system)\.)?\w+)')
 
 # Regular expression matching Chrome apps API usage, e.g.
 # chrome.tts.speak and chrome.app.runtime.onLaunched.addListener.
