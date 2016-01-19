@@ -29,6 +29,7 @@ import logging
 import os
 import random
 import shutil
+import subprocess
 import sys
 
 import bs4
@@ -37,6 +38,7 @@ import colorama
 import chrome_app.apis
 import chrome_app.manifest
 import configuration
+import polyfill_manifest
 
 # Chrome APIs with polyfills available.
 POLYFILLS = {
@@ -416,6 +418,68 @@ def add_service_worker(output_dir, ca_manifest, polyfill_paths,
   with open(sw_path, 'w') as sw_file:
     sw_file.write(sw_js)
 
+class InstallationError(Exception):
+  """Exception raised when a dependency fails to install."""
+  pass
+
+def install_dependency(call, output_dir):
+  """Installs a dependency into a directory.
+
+  Assumes that there is no output on stdout if installation fails.
+
+  Args:
+    call: List of arguments to call to install the dependency, e.g.
+      ['npm', 'install', 'bower'].
+    output_dir: Directory to install into.
+
+  Raises:
+    InstallationError
+  """
+  popen = subprocess.Popen(call, cwd=output_dir, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+  stdout, stderr = popen.communicate()
+
+  # Pass info and errors through to the debug log.
+  for line in stdout.split(b'\n'):
+    if line:
+      logging.debug('%s: %s', call[0], line)
+  for line in stderr.split(b'\n'):
+    if line:
+      logging.debug('%s err: %s', call[0], line)
+
+  # If installation failed, stdout will be empty.
+  if not stdout:
+    raise InstallationError(
+      'Failed to install with command: `{}`.'.format(' '.join(call)))
+
+def install_dependencies(dependencies, output_dir):
+  """Installs dependencies into a directory.
+
+  Args:
+    dependencies: List of dependency dictionaries, which are of the form
+      {'name': dependency name, 'path': path to dependency once installed,
+       'manager': 'bower' or 'npm'}.
+    output_dir: Directory to install dependencies into.
+
+  Raises:
+    ValueError if a dependency manager is not bower or npm.
+  """
+  logging.debug('Installing dependencies.')
+  for dependency in dependencies:
+    logging.debug('Installing `%s`.', dependency['name'])
+    try:
+      if dependency['manager'] == 'bower':
+        install_dependency(['bower', 'install', dependency['name']], output_dir)
+      elif dependency['manager'] == 'npm':
+        install_dependency(['npm', 'install', dependency['name']], output_dir)
+      else:
+        raise ValueError('Invalid dependency: No such manager `{}`.'.format(
+            dependency['manager']))
+    except InstallationError:
+      logging.warning('Failed to install dependency `%s` with %s',
+                      dependency['name'],
+                      dependency['manager'])
+
 def polyfill_paths(apis):
   """Returns a list of paths of polyfills of the given APIs.
 
@@ -549,6 +613,20 @@ def convert_app(input_dir, output_dir, config, force=False):
   # This must be done before the service worker is generated, or these files
   # will not be cached.
   copy_static_code(required_js_paths, output_dir, boilerplate_dir)
+
+  # Read in the polyfill manifests and install polyfill dependencies.
+  # This must be done after editing code (or the dependencies will also be
+  # edited) and before the service worker is generated (or the dependencies
+  # won't be cached).
+  polyfill_manifests = polyfill_manifest.load_many(polyfillable)
+  dependencies = [dependency
+                  for manifest in polyfill_manifests.values()
+                  for dependency in manifest['dependencies']]
+  try:
+    install_dependencies(dependencies, output_dir)
+  except ValueError as e:
+    logging.error(e.message)
+    return
 
   # Generate and write a service worker.
   add_service_worker(output_dir, ca_manifest, polyfill_paths(polyfillable),
