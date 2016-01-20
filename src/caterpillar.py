@@ -602,7 +602,7 @@ def convert_app(input_dir, output_dir, config, force=False):
   # This is adding TODOs, injecting tags, etc. - anything that involves editing
   # user code directly. This must be done before the static code is copied
   # across, or the polyfills will have TODOs added to them.
-  edit_code(output_dir, polyfillable, ca_manifest, config)
+  edit_code(output_dir, required_js_paths, ca_manifest, config)
 
   # We want the static SW file to be copied in too, so we add it here.
   # We have to add it after edit_code or it would be included in the HTML, but
