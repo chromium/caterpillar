@@ -9,7 +9,7 @@
       "status": "total",
       "text": ["No longer supports extension ID.",
                "No longer supports gender.",
-               "No longer supports required event types."],
-    },
-  ],
+               "No longer supports required event types."]
+    }
+  ]
 }
