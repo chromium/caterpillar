@@ -164,7 +164,10 @@ chrome.runtime.setUninstallURL = function(url, opt_callback) {
  *
  * In this polyfill, this function just refreshes the page.
  */
- chrome.runtime.reload = location.reload.bind(location);
+chrome.runtime.reload = function() {
+  if ('location' in self)
+    location.reload();
+};
 
 /**
  * Requests an update check for this app.
