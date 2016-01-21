@@ -578,6 +578,7 @@ def convert_app(input_dir, output_dir, config, force=False):
   # Read in and check the manifest file.
   try:
     ca_manifest = chrome_app.manifest.get(input_dir)
+    chrome_app.manifest.localize(ca_manifest, input_dir)
     chrome_app.manifest.verify(ca_manifest)
   except ValueError as e:
     logging.error(e.message)

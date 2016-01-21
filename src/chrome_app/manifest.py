@@ -20,9 +20,13 @@
 import json
 import logging
 import os
+import re
 
 # Chrome App manifest filename.
 MANIFEST_FILENAME = 'manifest.json'
+
+# Matches __MSG_(name)__.
+LOCALIZATION_MESSAGE_NAME = re.compile(r'__MSG_(\w+)__')
 
 def get(directory):
   """Returns a directory's manifest file as a dictionary.
@@ -42,6 +46,42 @@ def get(directory):
     manifest = json.load(manifest_file)
 
   return manifest
+
+def localize(manifest, directory):
+  """Substitutes localization strings for the default locale.
+
+  This is a shallow substitution, so only top-level values will be changed.
+
+  Args:
+    manifest: Manifest dictionary. Will be modified.
+    directory: Directory of the app that contains this manifest.
+  """
+  if 'default_locale' not in manifest:
+    return manifest
+
+  messages_path = os.path.join(
+      directory, '_locales', manifest['default_locale'], 'messages.json')
+  try:
+    with open(messages_path) as messages_file:
+      messages = json.load(messages_file)
+  except (IOError, OSError):
+    # No localization for the default locale.
+    messages = {}
+
+  for member, value in manifest.iteritems():
+    if isinstance(value, basestring) and value.startswith('__MSG_'):
+      name = LOCALIZATION_MESSAGE_NAME.match(value).group(1)
+
+      if name not in messages:
+        logging.warning(
+            'No localization message found for manifest member `%s` with value '
+            '`%s`.', member, value)
+        continue
+
+      logging.debug(
+        'Localizing manifest member `%s`: `%s` \u2192 `%s`',
+        member, value, messages[name]['message'])
+      manifest[member] = messages[name]['message']
 
 def verify(manifest):
   """Verifies that the manifest is valid.
