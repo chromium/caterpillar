@@ -81,8 +81,8 @@ def localize(manifest, directory):
         continue
 
       logging.debug(
-        'Localizing manifest member `%s`: `%s` \u2192 `%s`',
-        member, value, messages[name]['message'])
+          'Localizing manifest member `%s`: `%s` \u2192 `%s`',
+          member, value, messages[name]['message'])
       manifest[member] = messages[name]['message']
 
 def verify(manifest):
@@ -103,10 +103,9 @@ def verify(manifest):
     # Manifests must be version 2.
     if manifest['manifest_version'] != 2:
       logging.warning('Chrome Apps must have manifest version 2, found manifest'
-        ' version %s.', manifest['manifest_version'])
+          ' version %s.', manifest['manifest_version'])
     else:
       logging.debug('Found manifest version 2.')
-
 
   # The app/background is required.
   if 'app' not in manifest or 'background' not in manifest['app']:
@@ -122,7 +121,7 @@ def verify(manifest):
 
   # Warn on manifest members that won't be converted.
   included = {'manifest_version', 'app', 'name', 'version', 'short_name',
-    'default_locale', 'icons', 'author', 'description'}
+              'default_locale', 'icons', 'author', 'description'}
   for member in manifest:
     if member not in included:
       logging.warning('Manifest member `%s` will not be converted.', member)

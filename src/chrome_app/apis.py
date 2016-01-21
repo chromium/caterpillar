@@ -40,11 +40,12 @@ import surrogateescape
 # Regular expression matching Chrome API namespaces, e.g. chrome.tts and
 # chrome.app.window.
 CHROME_API_REGEX = re.compile(
-  r'(?<![\w.])chrome\.((?:(?:app|sockets|system)\.)?\w+)')
+    r'(?<![\w.])chrome\.((?:(?:app|sockets|system)\.)?\w+)')
 
 # Regular expression matching Chrome apps API usage, e.g.
 # chrome.tts.speak and chrome.app.runtime.onLaunched.addListener.
 CHROME_API_USAGE_REGEX = re.compile(r'(?<![\w.])chrome\.((?:\w+\.)+\w+)')
+
 
 def api_member_used(line):
   """
@@ -62,6 +63,7 @@ def api_member_used(line):
     return None
 
   return use_match.group(1)
+
 
 def app_apis(directory):
   """Returns a set of Chrome APIs used in a given app directory.
@@ -89,6 +91,7 @@ def app_apis(directory):
             apis.add(api_match.group(1))
 
   return sorted(apis)
+
 
 def apps_apis(directory):
   """Finds Chrome APIs used by each app in a directory of apps.
@@ -118,16 +121,17 @@ def apps_apis(directory):
       apis = app_apis(path)
       yield (name, path, apis)
 
+
 def main():
   """Parses command line arguments and scans APIs based on these arguments.
   """
   parser = argparse.ArgumentParser(description='Check what Chrome APIs Chrome '
-    'Apps are using.')
+      'Apps are using.')
   parser.add_argument('directory')
   parser.add_argument('-m', '--multiple', help='Check multiple apps',
-    action='store_true')
+      action='store_true')
   parser.add_argument('-v', '--verbose', help='Verbose output',
-    action='store_true')
+      action='store_true')
   args = parser.parse_args()
 
   if args.verbose:
@@ -145,6 +149,7 @@ def main():
   else:
     apis = app_apis(args.directory)
     print(", ".join(apis))
+
 
 if __name__ == '__main__':
   sys.exit(main())

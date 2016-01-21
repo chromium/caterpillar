@@ -23,7 +23,8 @@ import json
 import os
 
 # Where this file is located (so we can find resources).
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+SCRIPT_DIR = os.path.dirname(__file__)
+
 
 def load(api):
   """Loads the polyfill manifests for the given API.
@@ -35,10 +36,11 @@ def load(api):
     Polyfill manifest dictionary.
   """
   manifest_path = os.path.join(
-    SCRIPT_DIR, 'js', 'polyfills', '{}.manifest.json'.format(api))
+      SCRIPT_DIR, 'js', 'polyfills', '{}.manifest.json'.format(api))
   with open(manifest_path) as manifest_file:
     manifest = json.load(manifest_file)
     return manifest
+
 
 def load_many(apis):
   """Loads the polyfill manifests for the given APIs.

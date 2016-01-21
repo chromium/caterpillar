@@ -40,6 +40,7 @@ OPTIONS = {
   'report_dir': ('Directory of generated output report', 'caterpillar-report'),
 }
 
+
 def generate(interactive=False):
   """Generate a configuration file.
 
@@ -56,11 +57,12 @@ def generate(interactive=False):
 
     if interactive:
       value = raw_input(
-        '{} ({}): '.format(desc, default)).decode('utf-8', errors='replace')
+          '{} ({}): '.format(desc, default)).decode('utf-8', errors='replace')
       if value:
         config[opt] = value
 
   return config
+
 
 def load(config_path):
   """Loads a JSON configuration file.
@@ -92,6 +94,7 @@ def load(config_path):
 
   return config
 
+
 def missing_options(config):
   """Returns a list of expected options missing from a configuration dictionary.
 
@@ -103,6 +106,7 @@ def missing_options(config):
   """
   return sorted(opt for opt in OPTIONS if opt not in config)
 
+
 def unexpected_options(config):
   """Returns a list of unexpected options found in a configuration dictionary.
 
@@ -113,6 +117,7 @@ def unexpected_options(config):
     List of unexpected option names
   """
   return sorted(opt for opt in config if opt not in OPTIONS)
+
 
 def generate_and_save(output_path, interactive=False):
   """Generates and outputs a configuration file.
