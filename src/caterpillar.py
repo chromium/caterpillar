@@ -39,6 +39,7 @@ import chrome_app.apis
 import chrome_app.manifest
 import configuration
 import polyfill_manifest
+import surrogateescape
 
 # Chrome APIs with polyfills available.
 POLYFILLS = {
@@ -298,23 +299,27 @@ def insert_todos_into_file(js_path):
   Args:
     js_path: Path to JavaScript file.
   """
-  with open(js_path, 'rU') as in_js:
+  with open(js_path) as in_js_file:
     # This search is very naïve and will only check line-by-line if there
     # are easily spotted Chrome Apps API function calls.
-    out_js = []
-    for line_no, line in enumerate(in_js):
+    out_js_lines = []
+    for line_no, line in enumerate(in_js_file):
+      line = surrogateescape.decode(line)
       api_call = chrome_app.apis.api_member_used(line)
       if api_call is not None:
         # Construct a TODO comment.
-        todo = '// TODO(Caterpillar): Check usage of {}.\n'.format(api_call)
+        newline = '\r\n' if line.endswith('\r\n') else '\n'
+        todo = '// TODO(Caterpillar): Check usage of {}.{}'.format(api_call,
+                                                                   newline)
         logging.debug('Inserting TODO in `%s:%d`:\n\t%s', js_path, line_no,
                       todo)
-        out_js.append(todo)
-      out_js.append(line)
+        out_js_lines.append(todo)
+      out_js_lines.append(line)
 
-  with open(js_path, 'w') as js_file:
+  with open(js_path, 'w') as out_js_file:
     logging.debug('Writing modified file `%s`.', js_path)
-    js_file.write(''.join(out_js))
+    out_js = surrogateescape.encode(''.join(out_js_lines))
+    out_js_file.write(out_js)
 
 def insert_todos_into_directory(output_dir):
   """Inserts TODO comments in all JavaScript code in a web app.
@@ -416,7 +421,7 @@ def add_service_worker(output_dir, ca_manifest, polyfill_paths,
   sw_path = os.path.join(output_dir, SW_SCRIPT_NAME)
   logging.debug('Writing service worker to `%s`.', sw_path)
   with open(sw_path, 'w') as sw_file:
-    sw_file.write(sw_js)
+    sw_file.write(surrogateescape.encode(sw_js))
 
 class InstallationError(Exception):
   """Exception raised when a dependency fails to install."""
@@ -440,10 +445,10 @@ def install_dependency(call, output_dir):
   stdout, stderr = popen.communicate()
 
   # Pass info and errors through to the debug log.
-  for line in stdout.split(b'\n'):
+  for line in surrogateescape.decode(stdout).split('\n'):
     if line:
       logging.debug('%s: %s', call[0], line)
-  for line in stderr.split(b'\n'):
+  for line in surrogateescape.decode(stderr).split('\n'):
     if line:
       logging.debug('%s err: %s', call[0], line)
 
@@ -522,14 +527,14 @@ def edit_code(output_dir, required_js_paths, ca_manifest, config):
         insert_todos_into_file(path)
       elif filename.endswith('.html'):
         logging.debug('Editing `%s`.', path)
-        with open(path) as html_file:
-          soup = bs4.BeautifulSoup(html_file.read())
+        with open(path) as in_html_file:
+          soup = bs4.BeautifulSoup(surrogateescape.decode(in_html_file.read()))
         inject_script_tags(soup, required_js_paths, root_path,
                            config['boilerplate_dir'], path)
         inject_misc_tags(soup, ca_manifest, root_path, path)
         logging.debug('Writing edited and prettified `%s`.', path)
-        with open(path, 'w') as html_file:
-          html_file.write(soup.prettify())
+        with open(path, 'w') as out_html_file:
+          out_html_file.write(surrogateescape.encode(soup.prettify()))
 
 # Main functions.
 

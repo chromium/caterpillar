@@ -35,6 +35,7 @@ import os
 import sys
 
 import manifest as app_manifest
+import surrogateescape
 
 # Regular expression matching Chrome API namespaces, e.g. chrome.tts and
 # chrome.app.window.
@@ -83,7 +84,7 @@ def app_apis(directory):
       if filename.endswith('.js'):
         path = os.path.join(dirpath, filename)
         with open(path) as js_file:
-          js = js_file.read()
+          js = surrogateescape.decode(js_file.read())
           for api_match in CHROME_API_REGEX.finditer(js):
             apis.add(api_match.group(1))
 

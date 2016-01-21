@@ -36,7 +36,7 @@ def load(api):
   """
   manifest_path = os.path.join(
     SCRIPT_DIR, 'js', 'polyfills', '{}.manifest.json'.format(api))
-  with open(manifest_path, 'rU') as manifest_file:
+  with open(manifest_path) as manifest_file:
     manifest = json.load(manifest_file)
     return manifest
 

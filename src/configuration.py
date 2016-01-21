@@ -25,6 +25,8 @@ from __future__ import print_function, division, unicode_literals
 import json
 import logging
 
+import surrogateescape
+
 # Names of the configuration options mapped to a brief description and a default
 # value.
 OPTIONS = {
@@ -53,7 +55,8 @@ def generate(interactive=False):
     config[opt] = default
 
     if interactive:
-      value = raw_input('{} ({}): '.format(desc, default))
+      value = raw_input(
+        '{} ({}): '.format(desc, default)).decode('utf-8', errors='replace')
       if value:
         config[opt] = value
 
