@@ -125,8 +125,10 @@ chrome.notifications.create = function(opt_notificationId, options,
     opt_notificationId = Math.round(Math.random() * MAX_NOTIFICATION_ID) + '';
   }
 
-  // TODO(alger): Make this work in Firefox.
-  Notification.requestPermission().then(() => {
+  // TODO(alger): This uses a deprecated callback since the callback is
+  // supported on both Chrome and Firefox but the not-deprecated Promise return
+  // is only currently supported on Chrome.
+  Notification.requestPermission(function() {
     var title = options.title;
     var body = options.message;
     if (options.contextMessage)

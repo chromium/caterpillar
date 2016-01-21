@@ -20,6 +20,7 @@ QUnit.module('notifications', {
       var Notification = sandbox.stub(self, 'Notification')
           .returns({close: this.close});
       var requestPermission = sandbox.stub(Notification, 'requestPermission')
+          .callsArg(0)  // Deprecated callback.
           .returns(Promise.resolve());
     },
     afterEach: function() {
