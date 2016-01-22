@@ -28,6 +28,7 @@ Can also be used from the command line.
 from __future__ import print_function, division, unicode_literals
 
 import argparse
+import collections
 import json
 import logging
 import re
@@ -36,6 +37,7 @@ import sys
 
 import manifest as app_manifest
 import surrogateescape
+import walk
 
 # Regular expression matching Chrome API namespaces, e.g. chrome.tts and
 # chrome.app.window.
@@ -45,6 +47,23 @@ CHROME_API_REGEX = re.compile(
 # Regular expression matching Chrome apps API usage, e.g.
 # chrome.tts.speak and chrome.app.runtime.onLaunched.addListener.
 CHROME_API_USAGE_REGEX = re.compile(r'(?<![\w.])chrome\.((?:\w+\.)+\w+)')
+
+# Regular expression matching anything in the chrome namespace, e.g. chrome.tts
+# or chrome.app.runtime.onLaunched.addListener.
+CHROME_NAMESPACE_REGEX = re.compile(r'chrome((?:\.\w+)+)')
+
+# Regular expression matching both the API and the member, assuming both exist.
+CHROME_API_AND_MEMBER_REGEX = re.compile(r"""
+  (?<![\w.])chrome\. # In the chrome namespace
+  ( # Capture the full API name
+    (?:(?:app|sockets|system)\.)? # API may be part of a super-API namespace
+    \w+ # Actual API name
+  )
+  \.
+  ( # Capture the full member name
+    (?:\w+\.?)+
+  )
+""", re.VERBOSE)
 
 
 def api_member_used(line):
@@ -79,16 +98,12 @@ def app_apis(directory):
 
   # For each js file in the directory, add all of the Chrome APIs being used to
   # a set of Chrome API names.
-  dirwalk = os.walk(directory)
   apis = set()
-  for (dirpath, _, filenames) in dirwalk:
-    for filename in filenames:
-      if filename.endswith('.js'):
-        path = os.path.join(dirpath, filename)
-        with open(path) as js_file:
-          js = surrogateescape.decode(js_file.read())
-          for api_match in CHROME_API_REGEX.finditer(js):
-            apis.add(api_match.group(1))
+  for js_path in walk.all_paths(directory, extension='js'):
+    with open(js_path, 'rU') as js_file:
+      js = surrogateescape.decode(js_file.read())
+    for api_match in CHROME_API_REGEX.finditer(js):
+      apis.add(api_match.group(1))
 
   return sorted(apis)
 
@@ -120,6 +135,45 @@ def apps_apis(directory):
       name = manifest['name']
       apis = app_apis(path)
       yield (name, path, apis)
+
+
+def usage(apis, directory, context_size=2):
+  """Gets information about the usage of Chrome Apps APIs in an app directory.
+
+  Args:
+    apis: List of API names.
+    directory: Path to app directory.
+    context_size: Number of lines either side of each API usage to consider part
+      of the context for that usage. Default is 2.
+
+  Returns:
+    Dictionary mapping API names to dictionaries. These dictionaries then map
+    member names to (filepath, linenum, context, context_linenum) tuples.
+    - linenum is the line number of the API usage.
+    - context is a string containing the lines of code surrounding references
+      to the API usage.
+    - context_linenum is the line number that the context starts on.
+  """
+  # Maps API names to dictionaries that map API members to contexts
+  usage_data = {api: collections.defaultdict(list) for api in apis}
+  api_regexes = {api: re.compile(r'chrome\.{}((?:\.\w+)+)'.format(api))
+                 for api in apis}
+
+  for js_path in walk.all_paths(directory, extension='js'):
+    with open(js_path, 'rU') as js_file:
+      lines = [surrogateescape.decode(line) for line in js_file]
+    for line_num, line in enumerate(lines):
+      for api, regex in api_regexes.items():
+        match = regex.search(line)
+        if match:
+          context_linenum = max(0, line_num - context_size)
+          member = match.group(1)[1:]  # Slice to remove the leading dot.
+          context = lines[context_linenum:line_num + context_size + 1]
+          rel_path = os.path.relpath(js_path, directory)
+          member_usage = (rel_path, line_num, ''.join(context), context_linenum)
+          usage_data[api][member].append(member_usage)
+
+  return usage_data
 
 
 def main():
