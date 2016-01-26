@@ -1,0 +1,10 @@
+{
+  "app": {
+    "background": {
+      "scripts": ["a_background_script.js"]
+    }
+  },
+  "manifest_version": 2,
+  "name": "Minimal App",
+  "version": "1.0.0"
+}
