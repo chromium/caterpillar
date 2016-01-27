@@ -546,9 +546,10 @@ def edit_code(output_dir, required_js_paths, ca_manifest, config):
       elif filename.endswith('.html'):
         logging.debug('Editing `%s`.', path)
         with open(path) as in_html_file:
-          soup = bs4.BeautifulSoup(surrogateescape.decode(in_html_file.read()))
-        inject_script_tags(soup, required_js_paths, root_path,
-                           config['boilerplate_dir'], path)
+          soup = bs4.BeautifulSoup(
+              surrogateescape.decode(in_html_file.read()), 'html.parser')
+        inject_script_tags(
+            soup, required_js_paths, root_path, config['boilerplate_dir'], path)
         inject_misc_tags(soup, ca_manifest, root_path, path)
         logging.debug('Writing edited and prettified `%s`.', path)
         with open(path, 'w') as out_html_file:
