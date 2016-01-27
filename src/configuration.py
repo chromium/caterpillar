@@ -41,6 +41,26 @@ OPTIONS = {
 }
 
 
+def str_to_bool(string):
+  """Converts a case-insensitive string 'true' or 'false' into a bool.
+
+  Args:
+    string: String to convert. Either 'true' or 'false', case-insensitive.
+
+  Raises:
+    ValueError if string is not 'true' or 'false'.
+  """
+  lower_string = string.lower()
+
+  if lower_string == 'true':
+    return True
+
+  if lower_string == 'false':
+    return False
+
+  raise ValueError('Expected "true" or "false"; got "{}".'.format(string))
+
+
 def generate(interactive=False):
   """Generate a configuration file.
 
@@ -50,16 +70,25 @@ def generate(interactive=False):
 
   Returns:
     Configuration dictionary
+
+  Raises:
+    ValueError when a non-Boolean value is given for an option expected to be
+      Boolean.
   """
   config = {}
   for opt, (desc, default) in sorted(OPTIONS.items()):
     config[opt] = default
 
     if interactive:
-      value = raw_input(
-          '{} ({}): '.format(desc, default)).decode('utf-8', errors='replace')
-      if value:
-        config[opt] = value
+      value = raw_input('{} ({}): '.format(desc, default))
+
+      if not value:
+        continue
+
+      if isinstance(default, bool):
+        value = str_to_bool(value)
+
+      config[opt] = value
 
   return config
 
