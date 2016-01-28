@@ -30,13 +30,9 @@ import surrogateescape
 # Names of the configuration options mapped to a brief description and a default
 # value.
 OPTIONS = {
-  'id': ('Chrome App ID', '-1'),
   'start_url': ('Path to main HTML file', 'index.html'),
-  'root': ('Where the root of the web app will be', '.'),
   'boilerplate_dir':
     ('Subdirectory of root where Caterpillar will put scripts', 'caterpillar'),
-  'update_uris':
-    ('Whether to normalise all URIs in the web app to the root', True),
   'report_dir': ('Directory of generated output report', 'caterpillar-report'),
 }
 
