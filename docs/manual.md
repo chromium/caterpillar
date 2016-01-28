@@ -11,18 +11,33 @@ then generate a report telling you how well the automatic conversion went. If
 your Chrome App wasn't completely converted automatically, the report will help
 you finish the conversion.
 
+## Usage Summary
+
+```bash
+./caterpillar.py config -i config.json
+./caterpillar.py convert -c config.json my-chrome-app/ my-web-app/
+```
+
+This will convert an unpackaged Chrome App `my-chrome-app/` into a progressive
+web app `my-web-app/` and generate a conversion report inside a subdirectory of
+`my-web-app/` (depending on the configuration options you set).
+
 ## Installing Caterpillar
 
 Clone it from the repository:
 
-    git clone https://github.com/chromium/caterpillar.git caterpillar
-    cd caterpillar
+```bash
+git clone https://github.com/chromium/caterpillar.git caterpillar
+cd caterpillar
+```
 
 ## Generating a configuration file
 Caterpillar needs a JSON configuration file, and includes a tool to help you
 generate one. To interactively generate a config file run:
 
-    ./caterpillar.py config -i config.json
+```bash
+./caterpillar.py config -i config.json
+```
 
 Caterpillar will prompt you to enter information about your Chrome App. If you
 hit enter without typing anything, the default value (displayed in parentheses)
@@ -46,7 +61,9 @@ Say your Chrome App is called "My Chrome App" and is located in "~/my-chrome-
 app", and you want to convert it into a web app stored in the folder "~/my-web-
 app". Run Caterpillar:
 
-    ./caterpillar.py convert -c config.json ~/my-chrome-app ~/my-web-app
+```bash
+./caterpillar.py convert -c config.json ~/my-chrome-app ~/my-web-app
+```
 
 Caterpillar will try to convert your Chrome App into a web app. It will also
 output warnings if it finds something it can't convert. Finally, it will also

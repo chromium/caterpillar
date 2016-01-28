@@ -13,6 +13,19 @@ Extract the code into a folder. Install dependencies with pip and npm:
 
     $ pip install -r requirements.txt && npm install
 
+## Usage
+
+```bash
+./caterpillar.py config -i config.json
+./caterpillar.py convert -c config.json my-chrome-app/ my-web-app/
+```
+
+This will convert an unpackaged Chrome App `my-chrome-app/` into a progressive
+web app `my-web-app/` and generate a conversion report inside a subdirectory of
+`my-web-app/` (depending on the configuration options you set).
+
+For more detailed documentation, see [the manual](docs/manual.md).
+
 ## Disclaimer
 
 This is not an official Google product (experimental or otherwise), it is just
