@@ -137,7 +137,7 @@ def apps_apis(directory):
       yield (name, path, apis)
 
 
-def usage(apis, directory, context_size=2):
+def usage(apis, directory, context_size=2, ignore_dirs=None):
   """Gets information about the usage of Chrome Apps APIs in an app directory.
 
   Args:
@@ -145,6 +145,7 @@ def usage(apis, directory, context_size=2):
     directory: Path to app directory.
     context_size: Number of lines either side of each API usage to consider part
       of the context for that usage. Default is 2.
+    ignore_dirs: Set of absolute directory paths to ignore. Optional.
 
   Returns:
     Dictionary mapping API names to dictionaries. These dictionaries then map
@@ -154,12 +155,16 @@ def usage(apis, directory, context_size=2):
       to the API usage.
     - context_linenum is the line number that the context starts on.
   """
+  if ignore_dirs is None:
+    ignore_dirs = set()
+
   # Maps API names to dictionaries that map API members to contexts
   usage_data = {api: collections.defaultdict(list) for api in apis}
   api_regexes = {api: re.compile(r'chrome\.{}((?:\.\w+)+)'.format(api))
                  for api in apis}
 
-  for js_path in walk.all_paths(directory, extension='js'):
+  for js_path in walk.all_paths(
+      directory, extension='js', ignore_dirs=ignore_dirs):
     with open(js_path, 'rU') as js_file:
       lines = [surrogateescape.decode(line) for line in js_file]
     for line_num, line in enumerate(lines):
