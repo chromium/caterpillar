@@ -482,13 +482,9 @@ unrelated.app.call();"""
     with codecs.open(filepath, encoding='utf-8') as js_file:
       js = js_file.read()
       self.assertEqual(js, """// héllo world
-// TODO: (Caterpillar) Remove tts.speak call.
+// TODO(Caterpillar): Check usage of tts.speak.
 chrome.tts.speak('héllø');
-chrome.unrelated.call();
-unrelated.app.call();""")
-      self.assertEqual(js, """// héllo world
-chrome.tts.speak('héllø');
-// TODO: (Caterpillar) Remove unrelated.call call.
+// TODO(Caterpillar): Check usage of unrelated.call.
 chrome.unrelated.call();
 unrelated.app.call();""")
 
@@ -586,7 +582,13 @@ class TestEditCode(TestCaseWithOutputDir):
                           {'boilerplate_dir': BOILERPLATE_DIR})
     with codecs.open(os.path.join(self.output_path, 'my scrípt.js'),
                      encoding='utf-8') as js_file:
-      self.assertIn('// TODO: (Caterpillar)', js_file.read())
+      self.assertEqual(js_file.read(),
+"""// TODO(Caterpillar): Check usage of app.runtime.onLaunched.addListener.
+chrome.app.runtime.onLaunched.addListener(function() {
+// TODO(Caterpillar): Check usage of app.window.create.
+  chrome.app.window.create('my índex.html');
+});
+""")
 
   def test_script_tags(self):
     """Tests that script tags are inserted into HTML files."""
@@ -597,7 +599,6 @@ class TestEditCode(TestCaseWithOutputDir):
                           {'boilerplate_dir': BOILERPLATE_DIR})
     with codecs.open(os.path.join(self.output_path, 'my índex.html'),
                      encoding='utf-8') as js_file:
-      js_file.seek(0)
       self.assertIn(
           '<script src="{}"'.format(
               os.path.join('.', BOILERPLATE_DIR, 'tést.js')),
