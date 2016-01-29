@@ -24,7 +24,7 @@ import surrogateescape
 
 class SurrogateEscapeTest(unittest.TestCase):
 
-  def testSurrogateDecode(self):
+  def test_surrogate_decode(self):
     bs = b'latin-1: caf\xe9; utf-8: caf\xc3\xa9'
     s = bs.decode('utf-8', errors='surrogateescape')
     self.assertIsInstance(s, unicode)
@@ -34,17 +34,23 @@ class SurrogateEscapeTest(unittest.TestCase):
     self.assertIsInstance(s, unicode)
     self.assertEqual(s, u'latin-1: caf\udce9; utf-8: caf\xe9')
 
-  def testSurrogateEncode(self):
+  def test_surrogate_encode(self):
     s = u'latin-1: caf\udce9; utf-8: caf\xe9'
     bs = surrogateescape.encode(s)
     self.assertIsInstance(bs, bytes)
     self.assertEqual(bs, b'latin-1: caf\xe9; utf-8: caf\xc3\xa9')
 
-  def testMakePrintable(self):
+  def test_make_printable(self):
     s = u'latin-1: caf\udce9; utf-8: caf\xe9'
     printable = surrogateescape.make_printable(s)
     self.assertIsInstance(printable, unicode)
     self.assertEqual(printable, u'latin-1: caf\ufffd; utf-8: caf\xe9')
+
+  def test_cannot_encode_bytestring(self):
+    self.assertRaises(TypeError, surrogateescape.encode, b'bytestring')
+
+  def test_cannot_decode_unicodestring(self):
+    self.assertRaises(TypeError, surrogateescape.decode, u'unicodestring')
 
 
 if __name__ == '__main__':

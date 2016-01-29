@@ -60,6 +60,9 @@ def decode(bytestring, encoding='utf-8'):
     Unicode string, with surrogate control points for any byte value that could
     not be decoded with the given encoding.
   """
+  if not isinstance(bytestring, str):
+    raise TypeError('Only bytestrings can be decoded.')
+
   return bytestring.decode(encoding, errors='surrogateescape')
 
 
@@ -73,6 +76,9 @@ def encode(string, encoding='utf-8'):
     Byte string, with any surrogate control points from the input string being
     converted back into the original byte value.
   """
+  if not isinstance(string, unicode):
+    raise TypeError('Only Unicode strings can be encoded.')
+
   # Can't use str.encode due to technical limitations in Python 2.
   result = []
   for char in string:
