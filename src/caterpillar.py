@@ -51,8 +51,8 @@ POLYFILLS = {
 }
 
 # Manifest filenames.
-CA_MANIFEST_FILENAME = chrome_app.manifest.MANIFEST_FILENAME
-PWA_MANIFEST_FILENAME = 'manifest.webmanifest'
+CHROME_APP_MANIFEST_FILENAME = chrome_app.manifest.MANIFEST_FILENAME
+WEB_MANIFEST_FILENAME = 'manifest.webmanifest'
 
 # Name of the service worker registration script.
 REGISTER_SCRIPT_NAME = 'register_sw.js'
@@ -165,8 +165,9 @@ def cleanup_output_dir(output_dir):
   Args:
     output_dir: Path to output web app directory.
   """
-  logging.debug('Deleting Chrome App manifest `%s`.', CA_MANIFEST_FILENAME)
-  os.remove(os.path.join(output_dir, CA_MANIFEST_FILENAME))
+  logging.debug('Deleting Chrome App manifest `%s`.',
+                CHROME_APP_MANIFEST_FILENAME)
+  os.remove(os.path.join(output_dir, CHROME_APP_MANIFEST_FILENAME))
 
 
 def copy_static_code(static_code_paths, output_dir, boilerplate_dir):
@@ -196,25 +197,25 @@ def generate_web_manifest(manifest, start_url):
   Returns:
     Web manifest JSON dictionary.
   """
-  pwa_manifest = {}
-  pwa_manifest['name'] = manifest['name']
-  pwa_manifest['short_name'] = manifest.get('short_name', manifest['name'])
-  pwa_manifest['lang'] = manifest.get('default_locale', 'en')
-  pwa_manifest['splash_screens'] = []
+  web_manifest = {}
+  web_manifest['name'] = manifest['name']
+  web_manifest['short_name'] = manifest.get('short_name', manifest['name'])
+  web_manifest['lang'] = manifest.get('default_locale', 'en')
+  web_manifest['splash_screens'] = []
   # TODO(alger): Guess display mode from chrome.app.window.create calls
-  pwa_manifest['display'] = 'minimal-ui'
-  pwa_manifest['orientation'] = 'any'
+  web_manifest['display'] = 'minimal-ui'
+  web_manifest['orientation'] = 'any'
   # TODO(alger): Guess start_url from chrome.app.window.create calls
-  pwa_manifest['start_url'] = start_url
+  web_manifest['start_url'] = start_url
   # TODO(alger): Guess background/theme colour from the main page's CSS.
-  pwa_manifest['theme_color'] = 'white'
-  pwa_manifest['background_color'] = 'white'
-  pwa_manifest['related_applications'] = []
-  pwa_manifest['prefer_related_applications'] = False
-  pwa_manifest['icons'] = []
+  web_manifest['theme_color'] = 'white'
+  web_manifest['background_color'] = 'white'
+  web_manifest['related_applications'] = []
+  web_manifest['prefer_related_applications'] = False
+  web_manifest['icons'] = []
   if 'icons' in manifest:
     for icon_size in manifest['icons']:
-      pwa_manifest['icons'].append({
+      web_manifest['icons'].append({
         'src': manifest['icons'][icon_size],
         'sizes': '{0}x{0}'.format(icon_size)
       })
@@ -222,7 +223,7 @@ def generate_web_manifest(manifest, start_url):
   # TODO(alger): I've only looked at some of the manifest members here; probably
   # a bad idea to ignore the ones that don't copy across. Should give a warning.
 
-  return pwa_manifest
+  return web_manifest
 
 
 def polyfill_filename(api):
@@ -275,13 +276,13 @@ def inject_script_tags(soup, required_js_paths, root_path, boilerplate_dir,
     logging.debug('Injected `%s` script into `%s`.', script_path, html_path)
 
 
-def inject_misc_tags(soup, ca_manifest, root_path, html_path):
+def inject_misc_tags(soup, chrome_app_manifest, root_path, html_path):
   """
   Injects meta and link tags into an HTML document.
 
   Args:
     soup: BeautifulSoup HTML document. Will be modified.
-    ca_manifest: Manifest dictionary of _Chrome App_.
+    chrome_app_manifest: Manifest dictionary of _Chrome App_.
     root_path: Path to the root directory of the web app from this HTML file.
       This can be either absolute or relative.
     html_path: Path to the HTML document being modified.
@@ -295,18 +296,18 @@ def inject_misc_tags(soup, ca_manifest, root_path, html_path):
       soup.insert(0, head)
 
   # Add manifest link tag.
-  manifest_path = os.path.join(root_path, PWA_MANIFEST_FILENAME)
+  manifest_path = os.path.join(root_path, WEB_MANIFEST_FILENAME)
   manifest_link = soup.new_tag('link', rel='manifest', href=manifest_path)
   head.append(manifest_link)
 
   # Add meta tags (if they don't already exist).
   for tag in ('description', 'author', 'name'):
-    if tag in ca_manifest and not soup('meta', {'name': tag}):
-      meta = soup.new_tag('meta', content=ca_manifest[tag])
+    if tag in chrome_app_manifest and not soup('meta', {'name': tag}):
+      meta = soup.new_tag('meta', content=chrome_app_manifest[tag])
       meta['name'] = tag
       head.append(meta)
       logging.debug('Injected `%s` tag into `%s` with content `%s`.', tag,
-                    html_path, ca_manifest[tag])
+                    html_path, chrome_app_manifest[tag])
   if not soup('meta', {'charset': True}):
     meta_charset = soup.new_tag('meta', charset='utf-8')
     head.insert(0, meta_charset)
@@ -361,13 +362,13 @@ def insert_todos_into_directory(output_dir):
         path = os.path.join(dirpath, filename)
         insert_todos_into_file(path)
 
-def generate_service_worker(output_dir, ca_manifest, required_js_paths,
+def generate_service_worker(output_dir, chrome_app_manifest, required_js_paths,
                             boilerplate_dir):
   """Generates code for a service worker.
 
   Args:
     output_dir: Directory of the web app that this service worker will run in.
-    ca_manifest: Chrome App manifest dictionary.
+    chrome_app_manifest: Chrome App manifest dictionary.
     required_js_paths: List of paths to required scripts, relative to the
       boilerplate directory.
     boilerplate_dir: Caterpillar script directory within output web app.
@@ -401,7 +402,8 @@ def generate_service_worker(output_dir, ca_manifest, required_js_paths,
   required_js_paths = [os.path.join(boilerplate_dir, path)
                        for path in required_js_paths]
 
-  background_scripts = ca_manifest['app']['background'].get('scripts', [])
+  background_scripts = chrome_app_manifest['app']['background'].get('scripts',
+                                                                    [])
   for script in required_js_paths + background_scripts:
     logging.debug('Importing `%s` to the service worker.', script)
     sw_js += "importScripts('{}');\n".format(script)
@@ -421,13 +423,13 @@ def copy_script(script, directory):
   logging.debug('Writing `%s` to `%s`.', path, new_path)
   shutil.copyfile(path, new_path)
 
-def add_service_worker(output_dir, ca_manifest, required_js_paths,
+def add_service_worker(output_dir, chrome_app_manifest, required_js_paths,
                        boilerplate_dir):
   """Adds service worker scripts to a web app.
 
   Args:
     output_dir: Path to web app to add service worker scripts to.
-    ca_manifest: Chrome App manifest dictionary.
+    chrome_app_manifest: Chrome App manifest dictionary.
     required_js_paths: List of paths to required scripts, relative to the
       boilerplate directory.
     boilerplate_dir: Caterpillar script directory within web app.
@@ -438,8 +440,8 @@ def add_service_worker(output_dir, ca_manifest, required_js_paths,
   copy_script(REGISTER_SCRIPT_NAME, boilerplate_path)
   copy_script(SW_STATIC_SCRIPT_NAME, boilerplate_path)
 
-  sw_js = generate_service_worker(output_dir, ca_manifest, required_js_paths,
-                                  boilerplate_dir)
+  sw_js = generate_service_worker(output_dir, chrome_app_manifest,
+                                  required_js_paths, boilerplate_dir)
 
   # We can now write the service worker. Note that it must be in the root.
   sw_path = os.path.join(output_dir, SW_SCRIPT_NAME)
@@ -531,7 +533,7 @@ def polyfill_paths(apis):
           for api in apis]
 
 
-def edit_code(output_dir, required_js_paths, ca_manifest, config):
+def edit_code(output_dir, required_js_paths, chrome_app_manifest, config):
   """Directly edits the code of the output web app.
 
   All editing of user code should be called from this function.
@@ -540,7 +542,7 @@ def edit_code(output_dir, required_js_paths, ca_manifest, config):
     output_dir: Path to web app.
     required_js_paths: Paths of scripts to be included in the web app, relative
       to Caterpillar's boilerplate directory in the output web app.
-    ca_manifest: Manifest dictionary of the _Chrome App_.
+    chrome_app_manifest: Manifest dictionary of the _Chrome App_.
     config: Configuration dictionary.
   """
   logging.debug('Editing web app code.')
@@ -562,7 +564,7 @@ def edit_code(output_dir, required_js_paths, ca_manifest, config):
               surrogateescape.decode(in_html_file.read()), 'html.parser')
         inject_script_tags(
             soup, required_js_paths, root_path, config['boilerplate_dir'], path)
-        inject_misc_tags(soup, ca_manifest, root_path, path)
+        inject_misc_tags(soup, chrome_app_manifest, root_path, path)
         logging.debug('Writing edited and prettified `%s`.', path)
         with open(path, 'w') as out_html_file:
           out_html_file.write(surrogateescape.encode(soup.prettify()))
@@ -636,9 +638,9 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   # Read in and check the manifest file.
   try:
-    ca_manifest = chrome_app.manifest.get(input_dir)
-    chrome_app.manifest.localize(ca_manifest, input_dir)
-    chrome_app.manifest.verify(ca_manifest)
+    chrome_app_manifest = chrome_app.manifest.get(input_dir)
+    chrome_app.manifest.localize(chrome_app_manifest, input_dir)
+    chrome_app.manifest.verify(chrome_app_manifest)
   except ValueError as e:
     logging.error(e.message)
     return
@@ -648,11 +650,11 @@ def convert_app(input_dir, output_dir, config, force=False):
   logging.info('Got start URL from config file: `%s`', start_url)
 
   # Generate a progressive web app manifest.
-  pwa_manifest = generate_web_manifest(ca_manifest, start_url)
-  pwa_manifest_path = os.path.join(output_dir, PWA_MANIFEST_FILENAME)
-  with open(pwa_manifest_path, 'w') as pwa_manifest_file:
-    json.dump(pwa_manifest, pwa_manifest_file, indent=4, sort_keys=True)
-  logging.debug('Wrote `%s` to `%s`.', PWA_MANIFEST_FILENAME, pwa_manifest_path)
+  web_manifest = generate_web_manifest(chrome_app_manifest, start_url)
+  web_manifest_path = os.path.join(output_dir, WEB_MANIFEST_FILENAME)
+  with open(web_manifest_path, 'w') as web_manifest_file:
+    json.dump(web_manifest, web_manifest_file, indent=4, sort_keys=True)
+  logging.debug('Wrote `%s` to `%s`.', WEB_MANIFEST_FILENAME, web_manifest_path)
 
   # Remove unnecessary files from the output web app. This must be done before
   # the service worker is generated, or these files will be cached.
@@ -665,7 +667,7 @@ def convert_app(input_dir, output_dir, config, force=False):
   # Order is significant here - always, then dependencies, then polyfills.
   required_script_paths = (required_always_paths + required_dependency_paths
                            + required_polyfill_paths)
-  edit_code(output_dir, required_script_paths, ca_manifest, config)
+  edit_code(output_dir, required_script_paths, chrome_app_manifest, config)
 
   # We want the static SW file to be copied in too, so we add it here.
   # We have to add it after edit_code or it would be included in the HTML, but
@@ -688,7 +690,7 @@ def convert_app(input_dir, output_dir, config, force=False):
 
   # Generate and write a service worker.
   required_sw_paths = required_dependency_paths + required_polyfill_paths
-  add_service_worker(output_dir, ca_manifest, required_sw_paths,
+  add_service_worker(output_dir, chrome_app_manifest, required_sw_paths,
                      boilerplate_dir)
 
   logging.info('Conversion complete.')

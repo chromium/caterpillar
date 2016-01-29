@@ -42,11 +42,11 @@ class Status(object):
   TOTAL = 'total'
 
 
-def generate_summary(ca_manifest, apis, status, warnings):
+def generate_summary(chrome_app_manifest, apis, status, warnings):
   """Generates the summary section of a conversion report.
 
   Args:
-    ca_manifest: Manifest dictionary of input Chrome App.
+    chrome_app_manifest: Manifest dictionary of input Chrome App.
     apis: Dictionary mapping Chrome Apps API name to polyfill manifest
       dictionaries.
     status: Status representing conversion status of the entire app.
@@ -56,7 +56,7 @@ def generate_summary(ca_manifest, apis, status, warnings):
     HTML
   """
   return templates.TEMPLATE_SUMMARY.render(
-    ca_manifest=ca_manifest,
+    chrome_app_manifest=chrome_app_manifest,
     apis=apis,
     status=status,
     warnings=warnings,
@@ -98,14 +98,14 @@ def process_usage(apis, usage):
     api_info['usage'].sort()
 
 
-def generate_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs):
+def generate_polyfilled(chrome_app_manifest, apis, web_path, ignore_dirs):
   """Generates the polyfilled section of a conversion report.
 
   Args:
-    ca_manifest: Manifest dictionary of input Chrome App.
+    chrome_app_manifest: Manifest dictionary of input Chrome App.
     apis: Dictionary mapping Chrome Apps API name to polyfill manifest
       dictionaries.
-    pwa_path: Path to output web app directory.
+    web_path: Path to output web app directory.
     ignore_dirs: Absolute directory paths to ignore for API usage.
 
   Returns:
@@ -117,7 +117,7 @@ def generate_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs):
                      if api_info['status'] != Status.NONE}
 
   usage = chrome_app.apis.usage(
-      polyfilled_apis, pwa_path, ignore_dirs=ignore_dirs)
+      polyfilled_apis, web_path, ignore_dirs=ignore_dirs)
 
   process_usage(polyfilled_apis, usage)
 
@@ -141,7 +141,7 @@ def generate_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs):
   return templates.TEMPLATE_POLYFILLED.render(
     some_polyfilled=bool(polyfilled_apis),
     apis=polyfilled_apis,
-    ca_manifest=ca_manifest,
+    chrome_app_manifest=chrome_app_manifest,
     Status=Status
   )
 
@@ -164,14 +164,14 @@ def highlight_relevant_line(context, relevant_line, apis):
   return context
 
 
-def generate_not_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs):
+def generate_not_polyfilled(chrome_app_manifest, apis, web_path, ignore_dirs):
   """Generates the missing polyfills section of a conversion report.
 
   Args:
-    ca_manifest: Manifest dictionary of input Chrome App.
+    chrome_app_manifest: Manifest dictionary of input Chrome App.
     apis: Dictionary mapping Chrome Apps API name to polyfill manifest
       dictionaries.
-    pwa_path: Path to output web app directory.
+    web_path: Path to output web app directory.
     ignore_dirs: Absolute directory paths to ignore for API usage.
 
   Returns:
@@ -182,14 +182,14 @@ def generate_not_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs):
                      if apis[api]['status'] == Status.NONE}
 
   usage = chrome_app.apis.usage(
-      missing_apis, pwa_path, ignore_dirs=ignore_dirs)
+      missing_apis, web_path, ignore_dirs=ignore_dirs)
 
   process_usage(missing_apis, usage)
 
   return templates.TEMPLATE_NOT_POLYFILLED.render(
     some_not_polyfilled=bool(missing_apis),
     apis=missing_apis,
-    ca_manifest=ca_manifest,
+    chrome_app_manifest=chrome_app_manifest,
     Status=Status
   )
 
@@ -308,16 +308,17 @@ def format_html(string, apis):
   return chrome_app.apis.CHROME_NAMESPACE_REGEX.sub(replacer, string)
 
 
-def generate(ca_manifest, apis, status, warnings, pwa_path, boilerplate_dir):
+def generate(chrome_app_manifest, apis, status, warnings, web_path,
+             boilerplate_dir):
   """Generates a conversion report.
 
   Args:
-    ca_manifest: Manifest dictionary of input Chrome App.
+    chrome_app_manifest: Manifest dictionary of input Chrome App.
     apis: Dictionary mapping Chrome Apps API name to polyfill manifest
       dictionaries.
     status: Status representing conversion status of the entire app.
     warnings: List of general warnings logged during conversion.
-    pwa_path: Path to output progressive web app.
+    web_path: Path to output progressive web app.
     boilerplate_dir: Boilerplate directory relative to the output directory.
 
   Returns:
@@ -325,16 +326,17 @@ def generate(ca_manifest, apis, status, warnings, pwa_path, boilerplate_dir):
   """
   # Ignore the Caterpillar boilerplate directory so we don't see polyfill code
   # included in API usages.
-  ignore_dirs = {os.path.abspath(os.path.join(pwa_path, boilerplate_dir))}
+  ignore_dirs = {os.path.abspath(os.path.join(web_path, boilerplate_dir))}
 
   warnings = [format_html(warning, apis) for warning in warnings]
-  summary = generate_summary(ca_manifest, apis, status, warnings)
+  summary = generate_summary(chrome_app_manifest, apis, status, warnings)
   general_warnings = generate_general_warnings(warnings)
-  polyfilled = generate_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs)
+  polyfilled = generate_polyfilled(
+      chrome_app_manifest, apis, web_path,ignore_dirs)
   not_polyfilled = generate_not_polyfilled(
-      ca_manifest, apis, pwa_path, ignore_dirs)
+      chrome_app_manifest, apis, web_path, ignore_dirs)
   return templates.TEMPLATE_FULL.render(
-    ca_manifest=ca_manifest,
+    chrome_app_manifest=chrome_app_manifest,
     summary=summary,
     general_warnings=general_warnings,
     polyfilled=polyfilled,
