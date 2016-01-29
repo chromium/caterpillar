@@ -286,22 +286,30 @@ def inject_misc_tags(soup, ca_manifest, root_path, html_path):
       This can be either absolute or relative.
     html_path: Path to the HTML document being modified.
   """
+  head = soup.head
+  if not head:
+    head = soup.new_tag('head')
+    if soup.html:
+      soup.html.insert(0, head)
+    else:
+      soup.insert(0, head)
+
   # Add manifest link tag.
   manifest_path = os.path.join(root_path, PWA_MANIFEST_FILENAME)
   manifest_link = soup.new_tag('link', rel='manifest', href=manifest_path)
-  soup.head.append(manifest_link)
+  head.append(manifest_link)
 
   # Add meta tags (if they don't already exist).
   for tag in ('description', 'author', 'name'):
     if tag in ca_manifest and not soup('meta', {'name': tag}):
       meta = soup.new_tag('meta', content=ca_manifest[tag])
       meta['name'] = tag
-      soup.head.append(meta)
+      head.append(meta)
       logging.debug('Injected `%s` tag into `%s` with content `%s`.', tag,
                     html_path, ca_manifest[tag])
   if not soup('meta', {'charset': True}):
     meta_charset = soup.new_tag('meta', charset='utf-8')
-    soup.head.insert(0, meta_charset)
+    head.insert(0, meta_charset)
 
 
 def insert_todos_into_file(js_path):

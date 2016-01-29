@@ -447,6 +447,58 @@ class TestInjectMiscTags(unittest.TestCase):
     self.assertIsNotNone(meta)
     self.assertEqual(meta['content'], chrome_app_manifest['name'])
 
+  def test_no_head(self):
+    """Tests that the manifest link tag is added even with no head."""
+    chrome_app_manifest = {}
+    root_path = 'path'
+    html = """\
+<!DOCTYPE html>
+<html>
+ <body>
+  <h1>
+   Héllo, World! ÚÑÍ¢ÓÐÉ
+  </h1>
+ </body>
+</html>"""
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    caterpillar.inject_misc_tags(soup, chrome_app_manifest, root_path, '')
+    self.assertEqual(unicode(soup), """\
+<!DOCTYPE html>
+
+<html><head><meta charset="utf-8"/><link href="path/manifest.webmanifest"\
+ rel="manifest"/></head>
+<body>
+<h1>
+   Héllo, World! ÚÑÍ¢ÓÐÉ
+  </h1>
+</body>
+</html>""")
+
+
+  def test_no_head_or_html(self):
+    """Tests that the manifest link tag is added with no head or html tags."""
+    chrome_app_manifest = {}
+    root_path = 'path'
+    html = """
+<!DOCTYPE html>
+<body>
+<h1>
+ Héllo, World! ÚÑÍ¢ÓÐÉ
+</h1>
+</body>"""
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    caterpillar.inject_misc_tags(soup, chrome_app_manifest, root_path, '')
+    self.assertEqual(unicode(soup), """\
+<head><meta charset="utf-8"/><link href="path/manifest.webmanifest"\
+ rel="manifest"/></head>
+<!DOCTYPE html>
+
+<body>
+<h1>
+ Héllo, World! ÚÑÍ¢ÓÐÉ
+</h1>
+</body>""")
+
 
 class TestInsertTodosIntoFile(TestCaseWithTempDir):
   """Tests insert_todos_into_file."""
