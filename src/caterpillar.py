@@ -714,6 +714,14 @@ class Formatter(logging.Formatter):
     return style + super(Formatter, self).format(record)
 
 
+def unicode_arg(arg):
+  """Converts a bytestring command-line argument into a Unicode string."""
+  if sys.stdin.encoding:
+    return arg.decode(sys.stdin.encoding)
+
+  return arg.decode(sys.getfilesystemencoding())
+
+
 def main():
   """Executes the script and handles command line arguments."""
   # Set up parsers, then parse the command line arguments.
@@ -725,17 +733,19 @@ def main():
 
   parser_convert = subparsers.add_parser(
       'convert', help='Convert a Chrome App into a progressive web app.')
-  parser_convert.add_argument('input', help='Chrome App input directory')
   parser_convert.add_argument(
-      'output', help='Progressive web app output directory')
+      'input', help='Chrome App input directory', type=unicode_arg)
+  parser_convert.add_argument(
+      'output', help='Progressive web app output directory', type=unicode_arg)
   parser_convert.add_argument('-c', '--config', help='Configuration file',
-                              required=True, metavar='config')
+                              required=True, metavar='config', type=unicode_arg)
   parser_convert.add_argument('-f', '--force', help='Force output overwrite',
                               action='store_true')
 
   parser_config = subparsers.add_parser(
     'config', help='Print a default configuration file to stdout.')
-  parser_config.add_argument('output', help='Output config file path')
+  parser_config.add_argument('output', help='Output config file path',
+      type=unicode_arg)
   parser_config.add_argument('-i', '--interactive',
       help='Whether to interactively generate the config file',
       action='store_true')
