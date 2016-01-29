@@ -194,7 +194,7 @@ def generate_not_polyfilled(ca_manifest, apis, pwa_path, ignore_dirs):
   )
 
 
-def make_warning(name, member, text, apis, formatter=None):
+def make_warning(name, member, text, apis):
   """Generates a warning dictionary.
 
   Args:
@@ -204,17 +204,13 @@ def make_warning(name, member, text, apis, formatter=None):
     text: Text of warning.
     apis: Dictionary mapping Chrome Apps API name to polyfill manifest
       dictionaries.
-    formatter: A function to pass the warning text through before returning.
 
   Returns:
     Warning dictionary of form {'member': member name e.g onChanged.addListener,
     'text': warning text}.
   """
   full_text = 'chrome.{}.{}: {}'.format(name, member, text)
-  if formatter:
-    formatted_text = formatter(full_text)
-  else:
-    formatted_text = format_html(full_text, apis)
+  formatted_text = format_html(full_text, apis)
 
   return {'member': member, 'text': formatted_text}
 
