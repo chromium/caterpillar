@@ -1,0 +1,140 @@
+/**
+ * Copyright 2016 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+html,
+body {
+  background-color: #eee;
+  font-family: Lato, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+@font-face {
+  font-family: 'Inconsolata';
+  src: url(../bower_components/Inconsolata-Regular/index.ttf);
+  src: local('Inconsolata Regular'), local('Inconsolata-Regular');
+  font-weight: 400;
+  font-style: normal;
+}
+
+a:link {
+  color: #555;
+}
+
+a:hover {
+  color: #888;
+}
+
+h1 {
+  margin-top: 0;
+  padding-top: 0.67em;
+}
+
+#report {
+  background-color: white;
+  box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.75);
+  margin: 0 auto;
+  max-width: 1000px;
+  padding: 1em;
+}
+
+#summary {
+  border-bottom: 1px solid gray;
+  border-top: 1px solid gray;
+}
+
+/* Name of application. */
+.name {
+  font-style: italic;
+}
+
+/* Something that wasn't converted. */
+.none {
+  color: red;
+}
+
+/* Something that was partially converted. */
+.partial {
+  color: orange;
+}
+
+/* Something that was totally converted. */
+.total {
+  color: green;
+}
+
+/* Overrides for Code Prettify. */
+.none .kwd,
+.none .pln,
+.none .pun,
+.none .com {
+  color: red !important;
+  text-decoration: underline;
+}
+
+.partial .kwd,
+.partial .pln,
+.partial .pun,
+.partial .com {
+  color: orange !important;
+  text-decoration: underline;
+}
+
+.total .kwd,
+.total .pln,
+.total .pun,
+.total .com {
+  color: green !important;
+  text-decoration: underline;
+}
+
+/* Neutral information that may or may not impact conversion. */
+.info {
+  color: gray;
+}
+
+/* Warning information that may or may not impact conversion. */
+.warning {
+  color: orange;
+}
+
+/* A Chrome Apps feature name. */
+.ca-feature {
+  font-weight: bold;
+}
+
+/* Reference to a filepath. */
+.path {
+  font-family: Inconsolata, monospace;
+}
+
+footer {
+  color: gray;
+  padding: 1em;
+  text-align: center;
+}
+
+/* Google Code Prettify */
+li.L0,
+li.L1,
+li.L2,
+li.L3,
+li.L5,
+li.L6,
+li.L7,
+li.L8 {
+  list-style-type: decimal !important;
+}
