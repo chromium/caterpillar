@@ -18,13 +18,16 @@
 """Unit-test chrome_app.manifest.
 """
 
+import os
 import sys
 import unittest
 
 import mock
 
-sys.path.insert(1, '../../src/')
-import chrome_app.manifest
+import chrome_app.manifest as chrome_app_manifest
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
 
 class TestVerify(unittest.TestCase):
   """Tests chrome_app.manifest.verify."""
@@ -33,7 +36,7 @@ class TestVerify(unittest.TestCase):
   def test_empty(self, mock_logging):
     """Tests that an empty manifest errors."""
     with self.assertRaises(ValueError) as context:
-      chrome_app.manifest.verify({})
+      chrome_app_manifest.verify({})
     self.assertEqual(context.exception.message,
       'Chrome Apps must include a background script.')
 
@@ -42,24 +45,24 @@ class TestVerify(unittest.TestCase):
     """Tests that a manifest with only one required member errors or triggers
     warnings (depending on the member remaining).
     """
-    chrome_app.manifest.verify({'app': {'background': ''}})
+    chrome_app_manifest.verify({'app': {'background': ''}})
     mock_logging.warning.assert_has_calls([
       mock.call('Chrome Apps must include a version.'),
       mock.call('Chrome Apps must include a name.'),
       mock.call('Chrome Apps must have manifest version 2.'),
     ], any_order=True)
     with self.assertRaises(ValueError):
-      chrome_app.manifest.verify({'manifest_version': 2})
+      chrome_app_manifest.verify({'manifest_version': 2})
     with self.assertRaises(ValueError):
-      chrome_app.manifest.verify({'app': {}})
+      chrome_app_manifest.verify({'app': {}})
     with self.assertRaises(ValueError):
-      chrome_app.manifest.verify({'version': '0.0.1'})
+      chrome_app_manifest.verify({'version': '0.0.1'})
 
   @mock.patch('chrome_app.manifest.logging')
   def test_all_but_one(self, mock_logging):
     """Tests that a manifest with all but one required member errors or triggers
     a warning (depending on the member missing)."""
-    chrome_app.manifest.verify({
+    chrome_app_manifest.verify({
       'app': {'background': ''},
       'name': '',
       'version': '0.0.1',
@@ -68,7 +71,7 @@ class TestVerify(unittest.TestCase):
       'Chrome Apps must have manifest version 2.')
     mock_logging.warning.reset_mock()
 
-    chrome_app.manifest.verify({
+    chrome_app_manifest.verify({
       'manifest_version': 2,
       'app': {'background': ''},
       'version': '0.0.1',
@@ -77,7 +80,7 @@ class TestVerify(unittest.TestCase):
       'Chrome Apps must include a name.')
     mock_logging.warning.reset_mock()
 
-    chrome_app.manifest.verify({
+    chrome_app_manifest.verify({
       'manifest_version': 2,
       'app': {'background': ''},
       'name': '',
@@ -86,7 +89,7 @@ class TestVerify(unittest.TestCase):
       'Chrome Apps must include a version.')
 
     with self.assertRaises(ValueError) as context:
-      chrome_app.manifest.verify({
+      chrome_app_manifest.verify({
         'manifest_version': 2,
         'name': '',
         'version': '0.0.1',
@@ -97,7 +100,7 @@ class TestVerify(unittest.TestCase):
   def test_minimum_requirements(self):
     """Tests that a manifest fulfilling the minimum requirements returns None.
     """
-    self.assertIsNone(chrome_app.manifest.verify({
+    self.assertIsNone(chrome_app_manifest.verify({
       'manifest_version': 2,
       'app': {'background': ''},
       'name': '',
@@ -108,7 +111,7 @@ class TestVerify(unittest.TestCase):
   def test_wrong_manifest_version(self, mock_logging):
     """Tests that a manifest with the wrong version number triggers a warning.
     """
-    chrome_app.manifest.verify({
+    chrome_app_manifest.verify({
       'manifest_version': 1,
       'app': {'background': ''},
       'name': '',
@@ -120,7 +123,7 @@ class TestVerify(unittest.TestCase):
   def test_no_background_script(self):
     """Tests that a manifest with no background script errors."""
     with self.assertRaises(ValueError):
-      chrome_app.manifest.verify({
+      chrome_app_manifest.verify({
         'manifest_version': 2,
         'app': {},
         'name': '',
@@ -130,7 +133,7 @@ class TestVerify(unittest.TestCase):
   @mock.patch('chrome_app.manifest.logging')
   def test_warnings_for_unconverted_members(self, mock_logging):
     """Tests that a manifest with unconvertible members triggers a warning."""
-    chrome_app.manifest.verify({
+    chrome_app_manifest.verify({
       'manifest_version': 2,
       'app': {'background': ''},
       'name': '',
@@ -146,7 +149,7 @@ class TestVerify(unittest.TestCase):
     convertible_members = {'short_name', 'default_locale', 'icons', 'author',
       'description'}
     for member in convertible_members:
-      chrome_app.manifest.verify({
+      chrome_app_manifest.verify({
         'manifest_version': 2,
         'app': {'background': ''},
         'name': '',
@@ -163,7 +166,9 @@ class TestGet(unittest.TestCase):
   """
   def test_get(self):
     """Tests that get returns the correct app manifest."""
-    manifest = chrome_app.manifest.get('../test_app_minimal')
+    minimal_path = os.path.join(
+        os.path.dirname(ROOT_DIR), 'tests', 'test_app_minimal')
+    manifest = chrome_app_manifest.get(minimal_path)
     self.assertEqual(manifest,
       {
       'app': {
