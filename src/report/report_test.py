@@ -64,7 +64,7 @@ class TestGenerateSummary(unittest.TestCase):
 
   def test_generate_summary(self):
     """Tests that generate_summary gives expected HTML."""
-    ca_manifest = {
+    chrome_app_manifest = {
       'name': 'test app',
       'version': '1.0.0',
       'manifest_version': 2,
@@ -76,7 +76,8 @@ class TestGenerateSummary(unittest.TestCase):
     }
     status = report.Status.PARTIAL
     warnings = ['this is a warning', 'this is also a warning with <b>html</b>']
-    summary = report.generate_summary(ca_manifest, apis, status, warnings)
+    summary = report.generate_summary(
+        chrome_app_manifest, apis, status, warnings)
     summary = re.sub(r'\w+', ' ', summary)  # Ignore insignificant whitespace.
     self.assertEqual(bs4.BeautifulSoup(summary), bs4.BeautifulSoup(
       re.sub(r'\w+', ' ', """\

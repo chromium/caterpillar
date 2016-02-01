@@ -26,7 +26,7 @@ import jinja2
 TEMPLATE_SUMMARY = jinja2.Template("""
 <section id="summary">
   <h2>Summary</h2>
-  <span class="name">{{ ca_manifest.name }}</span> was
+  <span class="name">{{ chrome_app_manifest.name }}</span> was
   <span class="conversion-status {{ status }}">
     {% if status == Status.TOTAL %}
       successfully
@@ -90,8 +90,8 @@ TEMPLATE_POLYFILLED = jinja2.Template("""
       </p>
       {% if pf_info.relevant_warnings %}
         <p>
-          <span class="name">{{ ca_manifest.name }}</span> seems to make use of
-          features with missing or altered functionality in the polyfill:
+          <span class="name">{{ chrome_app_manifest.name }}</span> seems to make
+          use of features with missing or altered functionality in the polyfill:
         </p>
         <ul>
           {% for warning in pf_info.relevant_warnings %}
@@ -112,12 +112,12 @@ TEMPLATE_POLYFILLED = jinja2.Template("""
           {% endfor %}
         </ul>
         <p>
-          <span class="name">{{ ca_manifest.name }}</span> doesn't seem to use
-          these features, but you should check to make sure.
+          <span class="name">{{ chrome_app_manifest.name }}</span> doesn't seem
+          to use these features, but you should check to make sure.
         </p>
       {% endif %}
       <p>
-        <span class="name">{{ ca_manifest.name }}</span> uses
+        <span class="name">{{ chrome_app_manifest.name }}</span> uses
         <span class="ca-feature {{ pf_info.status }}">
           {{ pf_name }}
         </span>
@@ -151,7 +151,7 @@ TEMPLATE_NOT_POLYFILLED = jinja2.Template("""
         chrome.{{ pf_name }}
       </h3>
       <p>
-        <span class="name">{{ ca_manifest.name }}</span> uses
+        <span class="name">{{ chrome_app_manifest.name }}</span> uses
         <span class="ca-feature {{ pf_info.status }}">
           {{ pf_name }}
         </span>
@@ -175,14 +175,14 @@ TEMPLATE_FULL = jinja2.Template("""
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Caterpillar Conversion Report: {{ ca_manifest.name }}</title>
+    <title>Caterpillar Conversion Report: {{ chrome_app_manifest.name }}</title>
     <link rel="stylesheet" href="../bower_components/lato/css/lato.css">
     <link rel="stylesheet" href="css/report.css">
   <body>
     <div id="report">
       <h1>
         Caterpillar Conversion Report:
-        <span class="name">{{ ca_manifest.name }}</span>
+        <span class="name">{{ chrome_app_manifest.name }}</span>
       </h1>
       {{ summary }}
       {{ general_warnings }}
