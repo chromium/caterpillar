@@ -67,6 +67,7 @@ class TestCaseWithOutputDir(TestCaseWithTempDir):
     caterpillar.setup_output_dir(MINIMAL_PATH, self.output_path,
                                  BOILERPLATE_DIR, REPORT_DIR)
 
+
 # Test cases.
 
 
@@ -675,6 +676,31 @@ chrome.app.runtime.onLaunched.addListener(function() {
     with codecs.open(os.path.join(self.output_path, 'my índex.html'),
                      encoding='utf-8') as js_file:
       self.assertIn('<meta content="test233" name="name"', js_file.read())
+
+
+class TestAddAppInfo(TestCaseWithOutputDir):
+  """Tests add_app_info."""
+
+  def test_add_app_info(self):
+    """Tests add_app_info writes the correct file."""
+    chrome_app_manifest = {
+      'app': {'background': {}},
+      'name': 'tést app',
+    }
+
+    caterpillar.add_app_info(self.output_path, chrome_app_manifest)
+
+    with open(os.path.join(self.output_path, 'app.info.js')) as app_info_file:
+      app_info_js = app_info_file.read().decode('utf-8')
+
+    self.assertEqual(app_info_js, """\
+chrome.caterpillar.manifest = {
+  'app': {
+    'background': {}
+  },
+  'name': 't\\u00e9st app'
+};
+""")
 
 
 if __name__ == '__main__':

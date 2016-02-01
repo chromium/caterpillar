@@ -70,6 +70,9 @@ MAX_CACHE_VERSION = 1000000
 # Where this file is located (so we can find resources).
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
+# Name of the app info script.
+INFO_SCRIPT_NAME = 'app.info.js'
+
 # Maps dependency managers to the folder they install dependencies into.
 DEPENDENCY_MANAGER_INSTALL_FOLDER = {
   'bower': 'bower_components',
@@ -460,6 +463,24 @@ def add_service_worker(output_dir, chrome_app_manifest, required_js_paths,
     sw_file.write(surrogateescape.encode(sw_js))
 
 
+def add_app_info(output_dir, chrome_app_manifest):
+  """Adds an app info script, containing metadata, to a web app.
+
+  Args:
+    output_dir: Path to web app to add app info script to.
+    chrome_app_manifest: Chrome App manifest dictionary.
+  """
+  logging.debug('Generating app info script.')
+  js_manifest = json.dumps(chrome_app_manifest, sort_keys=True, indent=2,
+                           separators=(',', ': ')).replace('"', "'")
+  app_info_js = ('chrome.caterpillar.manifest = {manifest};\n').format(
+      manifest=js_manifest)
+  app_info_path = os.path.join(output_dir, INFO_SCRIPT_NAME)
+  logging.debug('Writing app info script to `%s`.', app_info_path)
+  with open(app_info_path, 'w') as app_info_file:
+    app_info_file.write(app_info_js.encode('utf-8'))
+
+
 class InstallationError(Exception):
   """Exception raised when a dependency fails to install."""
 
@@ -648,6 +669,10 @@ def convert_app(input_dir, output_dir, config, captured_warnings, force=False):
 
   required_polyfill_paths = polyfill_paths(polyfillable)
 
+  # Additionally, we may generate some files we want to use in HTML script tags,
+  # but we don't want to install as a dependency or copy from a static JS file.
+  required_generated_paths = []
+
   # Read in and check the manifest file.
   try:
     chrome_app_manifest = chrome_app.manifest.get(input_dir)
@@ -668,6 +693,11 @@ def convert_app(input_dir, output_dir, config, captured_warnings, force=False):
     json.dump(web_manifest, web_manifest_file, indent=4, sort_keys=True)
   logging.debug('Wrote `%s` to `%s`.', WEB_MANIFEST_FILENAME, web_manifest_path)
 
+  # Generate and write an app info file so we can access Chrome App metadata
+  # from polyfills and scripts.
+  add_app_info(output_dir, chrome_app_manifest)
+  required_generated_paths.append(os.path.join('..', INFO_SCRIPT_NAME))
+
   # Remove unnecessary files from the output web app. This must be done before
   # the service worker is generated, or these files will be cached.
   cleanup_output_dir(output_dir)
@@ -677,8 +707,8 @@ def convert_app(input_dir, output_dir, config, captured_warnings, force=False):
   # user code directly. This must be done before the static code is copied
   # across, or the polyfills will have TODOs added to them.
   # Order is significant here - always, then dependencies, then polyfills.
-  required_script_paths = (required_always_paths + required_dependency_paths
-                           + required_polyfill_paths)
+  required_script_paths = (required_always_paths + required_generated_paths +
+                           required_dependency_paths + required_polyfill_paths)
   edit_code(output_dir, required_script_paths, chrome_app_manifest, config)
 
   # We want the static SW file to be copied in too, so we add it here.

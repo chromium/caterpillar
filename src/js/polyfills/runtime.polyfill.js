@@ -102,7 +102,6 @@ chrome.runtime.lastError = null;
 /**
  * The ID of the app, or null if not applicable.
  */
-// TODO(alger): Consider getting this from the Chrome App manifest.
 chrome.runtime.id = null;
 
 /**

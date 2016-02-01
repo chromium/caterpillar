@@ -105,3 +105,8 @@ QUnit.test('getPlatformInfo gets info', function (assert) {
 QUnit.test('getPackageDirectoryEntry not implemented', function(assert) {
   assert.throws(chrome.runtime.getPackageDirectoryEntry, 'not implemented');
 });
+
+// Test that id is null.
+QUnit.test('id correct', function(assert) {
+  assert.strictEqual(chrome.runtime.id, null);
+});
