@@ -39,6 +39,7 @@ MINIMAL_APP_NAME = 'test_app_minimal'
 MINIMAL_PATH = os.path.join(
     os.path.dirname(TEST_DIR), 'tests', MINIMAL_APP_NAME)
 BOILERPLATE_DIR = 'bóilerplate dir'
+REPORT_DIR = 'réport dir'
 
 # Base classes for test cases with similar setups.
 
@@ -64,7 +65,7 @@ class TestCaseWithOutputDir(TestCaseWithTempDir):
     super(TestCaseWithOutputDir, self).setUp()
     self.output_path = os.path.join(self.temp_path, MINIMAL_APP_NAME)
     caterpillar.setup_output_dir(MINIMAL_PATH, self.output_path,
-                                 BOILERPLATE_DIR)
+                                 BOILERPLATE_DIR, REPORT_DIR)
 
 # Test cases.
 
@@ -80,27 +81,34 @@ class TestSetupOutputDir(TestCaseWithTempDir):
   def test_setup_output_dir_makes_dir(self):
     """Tests that setup_output_dir makes the expected output directory."""
     caterpillar.setup_output_dir(MINIMAL_PATH, self.output_path,
-                                 BOILERPLATE_DIR)
+                                 BOILERPLATE_DIR, REPORT_DIR)
     self.assertTrue(os.path.isdir(self.output_path))
 
   def test_setup_output_dir_makes_boilerplate_dir(self):
     """Tests that setup_output_dir makes a boilerplate directory."""
     caterpillar.setup_output_dir(MINIMAL_PATH, self.output_path,
-                                 BOILERPLATE_DIR)
+                                 BOILERPLATE_DIR, REPORT_DIR)
     self.assertTrue(
         os.path.isdir(os.path.join(self.output_path, BOILERPLATE_DIR)))
+
+  def test_setup_output_dir_makes_report_dir(self):
+    """Tests that setup_output_dir makes a report directory."""
+    caterpillar.setup_output_dir(MINIMAL_PATH, self.output_path,
+                                 BOILERPLATE_DIR, REPORT_DIR)
+    self.assertTrue(
+        os.path.isdir(os.path.join(self.output_path, REPORT_DIR)))
 
   def test_setup_output_dir_makes_polyfill_dir(self):
     """Tests that setup_output_dir makes a polyfill directory."""
     caterpillar.setup_output_dir(
-        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR)
+        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
     self.assertTrue(os.path.isdir(
         os.path.join(self.output_path, BOILERPLATE_DIR, 'polyfills')))
 
   def test_setup_output_dir_copies_all_files(self):
     """Tests that setup_output_dir copies all input files to the output app."""
     caterpillar.setup_output_dir(
-        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR)
+        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
     for root, _, files in os.walk(MINIMAL_PATH):
       for name in files:
         relpath = os.path.relpath(os.path.join(root, name), MINIMAL_PATH)
@@ -110,7 +118,7 @@ class TestSetupOutputDir(TestCaseWithTempDir):
   def test_setup_output_dir_no_unexpected_files(self):
     """Tests that setup_output_dir doesn't add any unexpected files."""
     caterpillar.setup_output_dir(
-        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR)
+        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
     for root, _, files in os.walk(self.output_path):
       for name in files:
         relpath = os.path.relpath(os.path.join(root, name), self.output_path)
@@ -122,14 +130,14 @@ class TestSetupOutputDir(TestCaseWithTempDir):
     os.mkdir(self.output_path)
     with self.assertRaises(OSError) as e:
       caterpillar.setup_output_dir(
-          MINIMAL_PATH, self.output_path, BOILERPLATE_DIR)
+          MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
     self.assertEqual(e.exception.message, 'Output directory already exists.')
 
   def test_setup_output_dir_force_true_copies_all_files(self):
     """Tests that force=True allows overwriting of an existing directory."""
     os.mkdir(self.output_path)
     caterpillar.setup_output_dir(
-        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, force=True)
+        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR, force=True)
     for root, _, files in os.walk(MINIMAL_PATH):
       for name in files:
         relpath = os.path.relpath(os.path.join(root, name), MINIMAL_PATH)
@@ -144,7 +152,7 @@ class TestSetupOutputDir(TestCaseWithTempDir):
       pass
 
     caterpillar.setup_output_dir(
-        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, force=True)
+        MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR, force=True)
 
     self.assertFalse(
         os.path.exists(os.path.join(self.output_path, test_filename)))

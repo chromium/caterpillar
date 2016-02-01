@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
+@import url(bower_components/Inconsolata/css/inconsolata.css);
+@import url(bower_components/lato/css/lato.css);
+
 html,
 body {
   background-color: #eee;
   font-family: Lato, sans-serif;
   margin: 0;
   padding: 0;
-}
-
-@font-face {
-  font-family: 'Inconsolata';
-  src: url(../bower_components/Inconsolata-Regular/index.ttf);
-  src: local('Inconsolata Regular'), local('Inconsolata-Regular');
-  font-weight: 400;
-  font-style: normal;
 }
 
 a:link {

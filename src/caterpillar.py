@@ -39,6 +39,7 @@ import chrome_app.apis
 import chrome_app.manifest
 import configuration
 import polyfill_manifest
+import report
 import surrogateescape
 
 # Chrome APIs with polyfills available.
@@ -118,7 +119,8 @@ chrome.app = {{
 """
 
 
-def setup_output_dir(input_dir, output_dir, boilerplate_dir, force=False):
+def setup_output_dir(input_dir, output_dir, boilerplate_dir, report_dir,
+                     force=False):
   """Sets up the output web app directory tree.
 
   Copies all files from the input Chrome App to the output web app, and creates
@@ -129,6 +131,8 @@ def setup_output_dir(input_dir, output_dir, boilerplate_dir, force=False):
     output_dir: String path to output web app directory.
     boilerplate_dir: String path where Caterpillar's scripts should be put
       relative to output_dir.
+    report_dir: String path where Caterpillar's report should be put relative
+      to output_dir.
     force: Whether to force overwrite existing output files. Default is False.
 
   Raises:
@@ -150,11 +154,16 @@ def setup_output_dir(input_dir, output_dir, boilerplate_dir, force=False):
   shutil.copytree(input_dir, output_dir)
 
   # Set up the boilerplate directory.
-  conv_dir = os.path.join(output_dir, boilerplate_dir)
-  logging.debug('Making Caterpillar directory `%s`.', conv_dir)
-  os.mkdir(conv_dir)
-  polyfill_dir = os.path.join(conv_dir, 'polyfills')
+  boilerplate_dir = os.path.join(output_dir, boilerplate_dir)
+  logging.debug('Making Caterpillar directory `%s`.', boilerplate_dir)
+  os.mkdir(boilerplate_dir)
+  polyfill_dir = os.path.join(boilerplate_dir, 'polyfills')
   os.mkdir(polyfill_dir)
+
+  # Set up the report directory.
+  report_dir = os.path.join(output_dir, report_dir)
+  logging.debug('Making report directory `%s`.', report_dir)
+  os.mkdir(report_dir)
 
   logging.debug('Finished setting up output directory `%s`.', output_dir)
 
@@ -573,22 +582,24 @@ def edit_code(output_dir, required_js_paths, chrome_app_manifest, config):
 # Main functions.
 
 
-def convert_app(input_dir, output_dir, config, force=False):
+def convert_app(input_dir, output_dir, config, captured_warnings, force=False):
   """Converts a Chrome App into a progressive web app.
 
   Args:
     input_dir: Path to input Chrome App directory.
     output_dir: Path to output web app directory.
     config: Configuration dictionary.
+    captured_warnings: List of warnings emitted by the logger.
     force: Whether to force overwrite existing output files. Default is False.
   """
+  boilerplate_dir = config['boilerplate_dir']
+  report_dir = config['report_dir']
+
   try:
-    setup_output_dir(input_dir, output_dir, config['boilerplate_dir'], force)
+    setup_output_dir(input_dir, output_dir, boilerplate_dir, report_dir, force)
   except OSError as e:
     logging.error(e.message)
     return
-
-  boilerplate_dir = config['boilerplate_dir']
 
   # Determine which Chrome Apps APIs are being used in the Chrome App.
   apis = chrome_app.apis.app_apis(output_dir)
@@ -694,6 +705,38 @@ def convert_app(input_dir, output_dir, config, force=False):
                      boilerplate_dir)
 
   logging.info('Conversion complete.')
+  logging.info('Generating conversion report.')
+
+  # Use default manifests for unpolyfillable APIs. This is because report
+  # generation requires a manifest for each API.
+  for api in not_polyfillable:
+    polyfill_manifests[api] = polyfill_manifest.default(api)
+
+  # We need to determine whether the conversion status is total, partial, or
+  # none.
+  # - Conversion is total if all non-app.* APIs are polyfilled with polyfills
+  #   that have status total.
+  # - Conversion is partial otherwise, assuming that there were no fatal errors.
+  #
+  # It's hard to tell whether app.window or app.runtime are used anywhere
+  # important, so for now we're just assuming that they are being used only for
+  # creating a window (which *all* Chrome Apps do) since this usage does not
+  # affect the output web app.
+  # TODO(alger): Improve method of estimating conversion status.
+  status = 'total'
+  for api, manifest in polyfill_manifests.iteritems():
+    if (manifest['status'] != 'total' and
+        api not in {'app.window', 'app.runtime'}):
+      status = 'partial'
+      break
+  # TODO(alger): Detect fatal errors which would give a none status.
+
+  # Finally, generate and write a conversion report.
+  abs_report_dir = os.path.join(output_dir, report_dir)
+  report.generate_and_write(abs_report_dir, chrome_app_manifest,
+      polyfill_manifests, status, captured_warnings, output_dir)
+
+  logging.info('Done.')
 
 
 class Formatter(logging.Formatter):
@@ -714,6 +757,27 @@ class Formatter(logging.Formatter):
       style = colorama.Fore.CYAN + colorama.Style.DIM
 
     return style + super(Formatter, self).format(record)
+
+
+class WarningStoreStreamHandler(logging.StreamHandler):
+  """Logging handler which stores warnings.
+
+  All logs (including warnings) are forwarded to a stream."""
+
+  def __init__(self, *args, **kwargs):
+    self.captured_warnings = []
+    super(WarningStoreStreamHandler, self).__init__(*args, **kwargs)
+
+  def emit(self, record):
+    """Captures warnings and errors and passes all logs on to StreamHandler.
+
+    Args:
+      record: Logging record
+    """
+    if record.levelno == logging.WARNING:
+      self.captured_warnings.append(record.msg % record.args)
+
+    super(WarningStoreStreamHandler, self).emit(record)
 
 
 def unicode_arg(arg):
@@ -760,7 +824,7 @@ def main():
   colorama.init(autoreset=True)
   logging_format = ':%(levelname)s:  \t%(message)s'
   formatter = Formatter(logging_format)
-  handler = logging.StreamHandler(sys.stdout)
+  handler = WarningStoreStreamHandler(sys.stdout)
   handler.setFormatter(formatter)
   logging.root.addHandler(handler)
 
@@ -770,7 +834,8 @@ def main():
 
   elif args.mode == 'convert':
     config = configuration.load(args.config)
-    convert_app(args.input, args.output, config, args.force)
+    convert_app(args.input, args.output, config, handler.captured_warnings,
+                args.force)
 
 
 if __name__ == '__main__':

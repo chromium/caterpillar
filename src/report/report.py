@@ -22,12 +22,15 @@ from __future__ import print_function, division, unicode_literals
 
 import cgi
 import copy
+import logging
 import os
 import re
-import webbrowser
+import shutil
 
+import caterpillar
 import chrome_app.apis
 import polyfill_manifest
+import surrogateescape
 import templates
 
 # Where this file is located (so we can find resources).
@@ -342,3 +345,48 @@ def generate(chrome_app_manifest, apis, status, warnings, web_path,
     polyfilled=polyfilled,
     not_polyfilled=not_polyfilled
   )
+
+
+def copy_css(directory):
+  """Copies required report CSS into a directory.
+
+  Args:
+    directory: Directory to copy CSS into.
+  """
+  logging.debug('Copying CSS into directory `%s`', directory)
+  shutil.copyfile(os.path.join(SCRIPT_DIR, 'report.css'),
+                  os.path.join(directory, 'report.css'))
+
+
+def install_bower_dependencies(dependencies, directory):
+  """Installs bower dependencies into a directory.
+
+  Args:
+    dependencies: List of dependency names.
+    directory: Directory to install dependencies into.
+  """
+  for dependency in dependencies:
+    caterpillar.install_dependency(['bower', 'install', dependency], directory)
+
+
+def generate_and_write(report_dir, chrome_app_manifest, apis, status, warnings,
+                       pwa_path):
+  """Generates a conversion report and writes it to a directory.
+
+  Args:
+    report_dir: Directory to write report to.
+    chrome_app_manifest: Manifest dictionary of input Chrome App.
+    apis: Dictionary mapping Chrome Apps API name to polyfill manifest
+      dictionaries.
+    status: Status representing conversion status of the entire app.
+    warnings: List of general warnings logged during conversion.
+    pwa_path: Path to output progressive web app.
+  """
+  report = generate(chrome_app_manifest, apis, status, warnings, pwa_path)
+  report_path = os.path.join(report_dir, 'report.html')
+  with open(report_path, 'w') as report_file:
+    logging.info('Writing conversion report to `%s`.', report_path)
+    report_file.write(surrogateescape.encode(report))
+  copy_css(report_dir)
+  install_bower_dependencies(['lato', 'inconsolata', 'code-prettify'],
+                             report_dir)

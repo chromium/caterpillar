@@ -26,6 +26,24 @@ import os
 SCRIPT_DIR = os.path.dirname(__file__)
 
 
+def default(api):
+  """Generates a default manifest for a given API.
+
+  Args:
+    api: API name.
+
+  Returns:
+    Default polyfill manifest dictionary.
+  """
+  return {
+    'name': api,
+    'status': 'none',
+    'coverage': 0.00,
+    'dependencies': [],
+    'warnings': [],
+  }
+
+
 def load(api):
   """Loads the polyfill manifests for the given API.
 

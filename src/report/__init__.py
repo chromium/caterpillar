@@ -17,3 +17,4 @@
 from . import report
 
 generate = report.generate
+generate_and_write = report.generate_and_write
