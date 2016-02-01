@@ -394,6 +394,7 @@ def generate_service_worker(output_dir, chrome_app_manifest, required_js_paths,
     all_filepaths.extend(
         os.path.relpath(os.path.join(dirpath, filename), output_dir)
         for filename in filenames)
+  all_filepaths.sort()
   logging.debug('Cached files:\n\t%s', '\n\t'.join(all_filepaths))
   # Format the file paths as JavaScript strings.
   all_filepaths = ["'{}'".format(fp) for fp in all_filepaths]
