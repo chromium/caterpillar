@@ -27,21 +27,30 @@ if (!('chrome' in self))
 if (!chrome.caterpillar)
   chrome.caterpillar = {};
 
+// We need the chrome.runtime namespace to store errors in.
+if (!chrome.runtime)
+  chrome.runtime = { lastError: null };
+
+// Stub out chrome.app.runtime.onLaunched.addListener. All Chrome Apps call this
+// method to launch the main window. Stubbing it means that background scripts
+// that launch the main window can be re-used elsewhere without causing script
+// errors.
+chrome.app = {
+  runtime: {
+    onLaunched: {
+      addListener: function() {},
+    }
+  }
+};
+
 (function() {
 
 /**
- * Sets an error message in lastError if chrome.runtime is loaded.
+ * Sets an error message in chrome.runtime.lastError.
  *
  * @param {string} message The error message to set.
- *
- * @throws Error with given message if runtime is not loaded, and a warning that
- *     runtime isn't loaded.
  */
 chrome.caterpillar.setError = function(message) {
-  if (!chrome.runtime) {
-    console.warn('chrome.runtime not found; runtime errors may not be caught.');
-    throw new Error(message);
-  }
   chrome.runtime.lastError = { 'message': message };
 };
 

@@ -107,16 +107,6 @@ var CACHED_FILES = [
 importScripts('{boilerplate_dir}/caterpillar.js');
 importScripts('{boilerplate_dir}/sw_static.js');
 
-// Ignore calls to chrome.app.runtime.onLaunched.addListener from the background
-// scripts.
-chrome.app = {{
-  runtime: {{
-    onLaunched: {{
-      addListener: function() {{}}
-    }}
-  }}
-}};
-
 // TODO(Caterpillar): Edit background scripts to remove chrome.app.runtime
 // dependence.
 """
