@@ -14,23 +14,37 @@
 
 """Caterpillar presubmit checks."""
 
-TESTS = [
-  'src/caterpillar_test.py'
+import os
+
+TEST_DATA_REALPATHS = [
+    os.path.realpath(os.path.join('tests', 'test_app_minimal')),
+    os.path.realpath(os.path.join('tests', 'test_app_tts')),
+    os.path.realpath(os.path.join('tests', 'test_app_tts_output')),
 ]
+
+def filter_test_data(affected_file):
+  path = affected_file.LocalPath()
+  realpath = os.path.realpath(path)
+
+  for test_path in TEST_DATA_REALPATHS:
+    if realpath.startswith(test_path):
+      return False
+
+  return True
 
 def CheckChange(input_api, output_api):
   results = []
   results += input_api.canned_checks.CheckChangeHasNoTabs(
-    input_api, output_api)
+      input_api, output_api)
   results += input_api.canned_checks.CheckChangeHasDescription(
-    input_api, output_api)
-  results += input_api.canned_checks.CheckLongLines(input_api, output_api, 80)
+      input_api, output_api)
   results += input_api.canned_checks.CheckChangeHasNoCrAndHasOnlyOneEol(
-    input_api, output_api)
+      input_api, output_api)
+  results += input_api.canned_checks.CheckLongLines(input_api, output_api, 80,
+      source_file_filter=filter_test_data)
   results += input_api.canned_checks.CheckChangeHasNoStrayWhitespace(
-    input_api, output_api)
-  results += input_api.RunTests(
-    input_api.canned_checks.GetUnitTests(input_api, output_api, TESTS))
+      input_api, output_api, source_file_filter=filter_test_data)
+  results += input_api.RunTests(GetPythonTests(input_api, output_api))
   results += input_api.RunTests(GetKarmaTests(input_api, output_api))
 
   return results
@@ -45,3 +59,8 @@ def GetKarmaTests(input_api, output_api):
   cmd = [
       input_api.os_path.join('node_modules', 'karma', 'bin', 'karma'), 'start']
   return [input_api.Command('Karma', cmd, {}, output_api.PresubmitError)]
+
+def GetPythonTests(input_api, output_api):
+  command = ['python', '-m', 'unittest', 'discover', '-s', 'src/', '-p',
+             '*_test.py']
+  return [input_api.Command('Python', command, {}, output_api.PresubmitError)]
