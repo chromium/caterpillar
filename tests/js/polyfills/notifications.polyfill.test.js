@@ -16,12 +16,24 @@ var sandbox = sinon.sandbox.create();
 
 QUnit.module('notifications', {
     beforeEach: function () {
-      this.close = sinon.spy();
-      var Notification = sandbox.stub(self, 'Notification')
-          .returns({close: this.close});
+      var close = this.close = sinon.spy();
+      this.Notification = sandbox.stub(self, 'Notification')
+          .returns({close: close});
       var requestPermission = sandbox.stub(Notification, 'requestPermission')
           .callsArg(0)  // Deprecated callback.
           .returns(Promise.resolve());
+      this.registration = {
+        notifications: [],
+        showNotification: sandbox.spy(function(title, opts) {
+          this.notifications.push({title: title, opts: opts, close: close});
+          return Promise.resolve();
+        }),
+        getNotifications: function() {
+          return Promise.resolve(this.notifications)
+        },
+      };
+      chrome.caterpillar.notifications.getRegistration = sandbox.stub()
+          .returns(Promise.resolve(this.registration));
     },
     afterEach: function() {
       sandbox.restore();
@@ -30,18 +42,20 @@ QUnit.module('notifications', {
 
 QUnit.test('creates a minimal notification', function(assert) {
   var done = assert.async();
-  var opts = {'type': 'basic'}
+  var opts = {'type': 'basic'};
+  var showNotification = this.registration.showNotification;
   chrome.notifications.create(opts, function() {
-    assert.ok(Notification.calledOnce);
+    assert.ok(showNotification.calledOnce);
     done();
   });
 });
 
 QUnit.test('creates a notification with correct body', function(assert) {
   var done = assert.async();
-  var opts = {'type': 'basic', 'message': 'méssage'}
+  var opts = {'type': 'basic', 'message': 'méssage'};
+  var showNotification = this.registration.showNotification;
   chrome.notifications.create(opts, function() {
-    assert.equal(Notification.args[0][1].body, 'méssage');
+    assert.equal(showNotification.args[0][1].body, 'méssage');
     done();
   });
 });
@@ -49,9 +63,10 @@ QUnit.test('creates a notification with correct body', function(assert) {
 QUnit.test('creates a notification with correct title',
     function(assert) {
       var done = assert.async();
-      var opts = {'type': 'basic', 'title': 'títle'}
+      var opts = {'type': 'basic', 'title': 'títle'};
+      var showNotification = this.registration.showNotification;
       chrome.notifications.create(opts, function() {
-        assert.equal(Notification.args[0][0], 'títle');
+        assert.equal(showNotification.args[0][0], 'títle');
         done();
       });
     }
@@ -59,9 +74,10 @@ QUnit.test('creates a notification with correct title',
 
 QUnit.test('creates a notification with correct ID', function(assert) {
   var done = assert.async();
-  var opts = {'type': 'basic', 'title': 'títle'}
+  var opts = {'type': 'basic', 'title': 'títle'};
+  var showNotification = this.registration.showNotification;
   chrome.notifications.create('íd', opts, function() {
-    assert.equal(Notification.args[0][1].tag, 'íd');
+    assert.equal(showNotification.args[0][1].tag, 'íd');
     done();
   });
 });
@@ -80,9 +96,10 @@ QUnit.test('create closes notifications with same ID', function(assert) {
 QUnit.test('create generates an ID if none is provided', function(assert) {
   var done = assert.async();
   var clear = sandbox.stub(chrome.notifications, 'clear');
+  var showNotification = this.registration.showNotification;
   chrome.notifications.create({'type': 'basic'}, function() {
-    assert.ok('tag' in Notification.args[0][1]);
-    assert.equal(typeof Notification.args[0][1].tag, 'string');
+    assert.ok('tag' in showNotification.args[0][1]);
+    assert.equal(typeof showNotification.args[0][1].tag, 'string');
     done();
   });
 });
@@ -97,9 +114,10 @@ QUnit.test('create requests notification permissions', function(assert) {
 
 QUnit.test('create appends the contextMessage to the body', function(assert) {
   var done = assert.async();
+  var showNotification = this.registration.showNotification;
   chrome.notifications.create({'type': 'basic', 'message': 'hello',
                                'contextMessage': 'world'}, function() {
-    assert.equal(Notification.args[0][1].body, 'hello\n\nworld');
+    assert.equal(showNotification.args[0][1].body, 'hello\n\nworld');
     done();
   });
 });
@@ -107,9 +125,10 @@ QUnit.test('create appends the contextMessage to the body', function(assert) {
 QUnit.test('create adds progress text for progress notifications',
   function(assert) {
     var done = assert.async();
+    var showNotification = this.registration.showNotification;
     chrome.notifications.create({'type': 'progress', 'message': 'hello',
                                  'progress': 15}, function() {
-      assert.equal(Notification.args[0][1].body, 'hello\n\nProgress: 15%');
+      assert.equal(showNotification.args[0][1].body, 'hello\n\nProgress: 15%');
       done();
     });
 });
@@ -127,9 +146,10 @@ QUnit.test('create warns if an unsupported type is given', function(assert) {
 
 QUnit.test('creates a notification with the correct icon',function(assert) {
     var done = assert.async();
+    var showNotification = this.registration.showNotification;
     chrome.notifications.create({'type': 'basic', 'iconUrl': 'aURL'},
         function() {
-          assert.equal(Notification.args[0][1].icon, 'aURL');
+          assert.equal(showNotification.args[0][1].icon, 'aURL');
           done();
         }
     );
@@ -201,3 +221,21 @@ QUnit.test(
 );
 
 // TODO(alger): Add tests for onClicked event handler.
+
+QUnit.test('creates a notification with deprecated method', function(assert) {
+  var done = assert.async();
+
+  // Registration is supported, but showNotification is not.
+  this.registration = {
+  };
+  chrome.caterpillar.notifications.getRegistration = sandbox.stub()
+      .returns(Promise.resolve(this.registration));
+
+  var Notification = this.Notification;
+  var opts = {'type': 'basic', 'message': 'méssage', 'title': 'tést'};
+  chrome.notifications.create(opts, function() {
+    assert.equal(Notification.args[0][1].body, 'méssage');
+    assert.equal(Notification.args[0][0], 'tést');
+    done();
+  });
+});

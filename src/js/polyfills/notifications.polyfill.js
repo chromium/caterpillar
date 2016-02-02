@@ -22,6 +22,8 @@
 if (!chrome.notifications)
   chrome.notifications = {};
 
+chrome.caterpillar.notifications = {};
+
 (function() {
 
 // Private object to map notification IDs to their notification.
@@ -125,29 +127,42 @@ chrome.notifications.create = function(opt_notificationId, options,
     opt_notificationId = Math.round(Math.random() * MAX_NOTIFICATION_ID) + '';
   }
 
-  // TODO(alger): This uses a deprecated callback since the callback is
-  // supported on both Chrome and Firefox but the not-deprecated Promise return
-  // is only currently supported on Chrome.
-  Notification.requestPermission(function() {
-    var title = options.title;
-    var body = options.message;
-    if (options.contextMessage)
-      body += '\n\n' + options.contextMessage;
-    if (options.type === chrome.notifications.TemplateType.PROGRESS) {
-      body += '\n\nProgress: ' + options.progress + '%';
-    } else if (options.type !== chrome.notifications.TemplateType.BASIC) {
-      console.warn('Notification type', options.type, 'not supported.',
-                   'Falling back to basic.');
-    }
-    var notification_options = {
-      'body': body,
-      'tag': opt_notificationId,
-      'icon': options.iconUrl,
-      'data': options,
-    };
+  var title = options.title;
+  var body = options.message;
+  if (options.contextMessage)
+    body += '\n\n' + options.contextMessage;
+  if (options.type === chrome.notifications.TemplateType.PROGRESS) {
+    body += '\n\nProgress: ' + options.progress + '%';
+  } else if (options.type !== chrome.notifications.TemplateType.BASIC) {
+    console.warn('Notification type', options.type, 'not supported.',
+                 'Falling back to basic.');
+  }
+  var notificationOptions = {
+    'body': body,
+    'tag': opt_notificationId,
+    'icon': options.iconUrl,
+    'data': options,
+  };
 
-    var notification = new Notification(title, notification_options);
+  // Service workers can't request permission, so request permission if we can
+  // or just assume we have permission if we can't.
+  var notificationPromise;
+  if (!Notification.requestPermission) {
+    notificationPromise = createNotification(title, notificationOptions);
+  } else {
+    notificationPromise = new Promise(function(resolve, reject) {
+      // TODO(alger): This uses a deprecated callback since the callback is
+      // supported on both Chrome and Firefox but the not-deprecated Promise
+      // return is only currently supported on Chrome.
+      Notification.requestPermission(function() {
+        createNotification(title, notificationOptions)
+            .then(resolve)
+            .catch(reject);
+      });
+    });
+  }
 
+  notificationPromise.then(function(notification) {
     for (var i = 0; i < onClickHandlers.length; i++) {
       notification.addEventListener('click', onClickHandlers[i]);
     }
@@ -156,8 +171,56 @@ chrome.notifications.create = function(opt_notificationId, options,
 
     if (opt_callback)
       opt_callback(opt_notificationId);
-  });
+  })
 };
+
+/**
+ * Gets the service worker registration.
+ *
+ * Exported so we can override for testing.
+ *
+ * @returns {Promise} Promise resolving to the service worker registration.
+ *     Rejects if no registration is available.
+ */
+chrome.caterpillar.notifications.getRegistration = function() {
+  if (self.registration)
+    return Promise.resolve(self.registration);
+
+  if (navigator.serviceWorker &&
+      navigator.serviceWorker.getRegistration) {
+    return navigator.serviceWorker.getRegistration().then(function(reg) {
+      if (!reg)
+        return Promise.reject();
+      return Promise.resolve(reg);
+    });
+  }
+
+  return Promise.reject();
+}
+
+
+/**
+ * Creates a notification.
+ *
+ * Internal helper function.
+ *
+ * @param {string} title
+ * @param {object} notificationOptions Object with properties body, tag, icon,
+ *     and data. All properties are expected to be defined.
+ * @returns {Promise} Promise resolving to a Notification.
+ */
+function createNotification(title, notificationOptions) {
+  return chrome.caterpillar.notifications.getRegistration()
+      .then(function(registration) {
+        registration.showNotification(title, notificationOptions);
+        return registration.getNotifications({ tag: notificationOptions.tag });
+      }).catch(function() {
+        return Promise.resolve([new Notification(title, notificationOptions)]);
+      }).then(function(notifications) {
+        // Notifications are in creation order, so get the last notification.
+        return Promise.resolve(notifications[notifications.length - 1]);
+      });
+}
 
 /**
  * Clears the specified notification.
