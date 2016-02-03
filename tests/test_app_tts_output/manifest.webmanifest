@@ -1,0 +1,23 @@
+{
+    "background_color": "white", 
+    "display": "minimal-ui", 
+    "icons": [
+        {
+            "sizes": "128x128", 
+            "src": "\ud83d\udcfc\\c/icon_big.png"
+        }, 
+        {
+            "sizes": "64x64", 
+            "src": "\ud83d\udcfc\\c/icon_small.png"
+        }
+    ], 
+    "lang": "en", 
+    "name": "Text-to-Speech Chrome App", 
+    "orientation": "any", 
+    "prefer_related_applications": false, 
+    "related_applications": [], 
+    "short_name": "Text-to-Speech Chrome App", 
+    "splash_screens": [], 
+    "start_url": "ttstest.html", 
+    "theme_color": "white"
+}

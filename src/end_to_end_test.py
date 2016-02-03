@@ -1,0 +1,164 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
+# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""End-to-end tests for Caterpillar."""
+
+from __future__ import print_function, division, unicode_literals
+
+import difflib
+import os
+import re
+import subprocess
+import sys
+import unittest
+
+import caterpillar
+import caterpillar_test
+
+TEST_DIR = os.path.dirname(os.path.realpath(__file__))
+CATERPILLAR_PATH = os.path.join(TEST_DIR, 'caterpillar.py')
+TTS_APP_NAME = 'test_app_tts'
+TTS_REFERENCE_NAME = 'test_app_tts_output'
+TTS_PATH = os.path.join(
+    os.path.dirname(TEST_DIR), 'tests', TTS_APP_NAME)
+TTS_REFERENCE_PATH = os.path.join(
+    os.path.dirname(TEST_DIR), 'tests', TTS_REFERENCE_NAME)
+
+
+class TestEndToEndConvert(caterpillar_test.TestCaseWithTempDir):
+  """Converts an entire Chrome App and checks the output is correct."""
+
+  def setUp(self):
+    """Converts a test Chrome App."""
+    super(TestEndToEndConvert, self).setUp()
+    self.input_dir = TTS_PATH
+    self.output_dir = os.path.join(self.temp_path, 'tts test output')
+    self.config_path = os.path.join(self.temp_path, 'config.json')
+
+    encoding = sys.getfilesystemencoding()
+
+    self.boilerplate_dir = 'caterpillar-📂'
+    self.report_dir = 'report ✓✓✓'
+    self.start_url = 'ttstest.html'
+    config_input = '{}\n{}\n{}\n'.format(
+        self.boilerplate_dir, self.report_dir, self.start_url).encode(encoding)
+
+    # Generate a config file using Caterpillar.
+    process = subprocess.Popen(
+        [CATERPILLAR_PATH, 'config', '-i', self.config_path],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    process.communicate(input=config_input)
+    process.wait()
+
+    if not os.path.exists(self.config_path):
+      raise RuntimeError('Configuration file generation failed.')
+
+    process = subprocess.Popen(
+        [CATERPILLAR_PATH, 'convert', '-c', self.config_path, self.input_dir,
+         self.output_dir],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    process.wait()
+
+  def test_output_matches_reference(self):
+    """Tests that the output matches the reference output."""
+    expected_files = set()
+    for dirname, _, filenames in os.walk(TTS_REFERENCE_PATH):
+      for filename in filenames:
+        relpath = os.path.relpath(
+            os.path.join(dirname, filename), TTS_REFERENCE_PATH)
+        expected_files.add(relpath)
+
+    for dirname, _, filenames in os.walk(self.output_dir):
+      for filename in filenames:
+        relpath = os.path.relpath(
+            os.path.join(dirname, filename), self.output_dir)
+        self.assertIn(relpath, expected_files)
+
+    expected_files = set()
+    for dirname, _, filenames in os.walk(self.output_dir):
+      for filename in filenames:
+        relpath = os.path.relpath(
+            os.path.join(dirname, filename), self.output_dir)
+        expected_files.add(relpath)
+
+    for dirname, _, filenames in os.walk(TTS_REFERENCE_PATH):
+      for filename in filenames:
+        relpath = os.path.relpath(
+            os.path.join(dirname, filename), TTS_REFERENCE_PATH)
+        self.assertIn(relpath, expected_files)
+
+  def test_all_correct_contents(self):
+    """Tests that the content of all non-static output files is expected."""
+    for dirname, _, filenames in os.walk(TTS_REFERENCE_PATH):
+      for filename in filenames:
+        if filename == caterpillar.SW_SCRIPT_NAME:
+          # Service worker is partly random, so test it elsewhere.
+          continue
+
+        reference_path = os.path.join(dirname, filename)
+        relpath = os.path.relpath(reference_path, TTS_REFERENCE_PATH)
+
+        if not (relpath.startswith(self.boilerplate_dir)
+                or relpath.startswith(self.report_dir)):
+          output_path = os.path.join(self.output_dir, relpath)
+          with open(reference_path) as reference_file:
+            with open(output_path) as output_file:
+              output_data = output_file.read().decode('utf-8')
+              reference_data = reference_file.read().decode('utf-8')
+              self.assertEqual(output_data, reference_data,
+                  'Difference found in file `{}`.\n{}'.format(relpath,
+                      '\n'.join(difflib.unified_diff(
+                          output_data.split('\n'),
+                          reference_data.split('\n'),
+                          fromfile=reference_path,
+                          tofile=output_path,
+                          n=0))))
+
+  def test_generated_service_worker(self):
+    """Tests that the generated service worker is as expected."""
+    output_sw_path = os.path.join(self.output_dir, caterpillar.SW_SCRIPT_NAME)
+    reference_sw_path = os.path.join(
+        TTS_REFERENCE_PATH, caterpillar.SW_SCRIPT_NAME)
+
+    with open(output_sw_path) as output_file:
+      with open(reference_sw_path) as reference_file:
+        output_data = output_file.read().decode('utf-8')
+        reference_data = reference_file.read().decode('utf-8')
+
+        # The cache version is randomly generated in the output service worker,
+        # so reset it to be 0, the same cache version as the reference service
+        # worker.
+        output_data = re.sub(
+            r'CACHE_VERSION = \d+', 'CACHE_VERSION = 0', output_data)
+
+        self.assertEqual(output_data, reference_data,
+            'Difference found in file `{}`.\n{}'.format(
+                caterpillar.SW_SCRIPT_NAME,
+                '\n'.join(difflib.unified_diff(
+                    output_data.split('\n'),
+                    reference_data.split('\n'),
+                    fromfile=reference_sw_path,
+                    tofile=output_sw_path,
+                    n=0))))
+
+
+if __name__ == '__main__':
+  unittest.main()

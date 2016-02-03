@@ -21,11 +21,13 @@ from __future__ import print_function, division, unicode_literals
 
 import codecs
 import copy
+import difflib
 import json
 import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
