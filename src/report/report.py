@@ -127,7 +127,6 @@ def generate_polyfilled(chrome_app_manifest, apis, web_path, ignore_dirs):
   # Get the warnings for each API; split them into relevant and other warnings.
   for api_name, api_info in polyfilled_apis.iteritems():
     api_info['relevant_warnings'] = []
-    api_info['other_warnings'] = []
     for warning in manifest_warnings(api_info, apis):
       # Is this warning's member used by the app?
       # Is it the parent of a member used by the app?
@@ -138,8 +137,6 @@ def generate_polyfilled(chrome_app_manifest, apis, web_path, ignore_dirs):
           # that might be.
           api_info['relevant_warnings'].append(warning['text'])
           break
-      else:
-        api_info['other_warnings'].append(warning['text'])
 
   return templates.TEMPLATE_POLYFILLED.render(
     some_polyfilled=bool(polyfilled_apis),

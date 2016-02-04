@@ -99,23 +99,6 @@ TEMPLATE_POLYFILLED = jinja2.Template("""
           {% endfor %}
         </ul>
       {% endif %}
-      {% if pf_info.other_warnings %}
-        <p>
-          Additionally, the
-          <span class="ca-feature {{ pf_info.status }}">
-            chrome.{{ pf_name }}
-          </span> polyfill has the following missing or altered functionality:
-        </p>
-        <ul>
-          {% for warning in pf_info.other_warnings %}
-            <li>{{ warning }}</li>
-          {% endfor %}
-        </ul>
-        <p>
-          <span class="name">{{ chrome_app_manifest.name }}</span> doesn't seem
-          to use these features, but you should check to make sure.
-        </p>
-      {% endif %}
       <p>
         <span class="name">{{ chrome_app_manifest.name }}</span> uses
         <span class="ca-feature {{ pf_info.status }}">
