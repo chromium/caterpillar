@@ -1,5 +1,4 @@
-// TODO(Caterpillar): Check usage of caterpillar.manifest.
-chrome.caterpillar.manifest = {
+caterpillar_.manifest = {
   "app": {
     "background": {
       "scripts": [

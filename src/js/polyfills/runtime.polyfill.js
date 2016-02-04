@@ -114,7 +114,7 @@ chrome.runtime.id = null;
  * @param {function} callback Callback function on success or error.
  */
 chrome.runtime.getBackgroundPage = function(callback) {
-  chrome.caterpillar.setError('No background page for progressive web apps.');
+  caterpillar_.setError('No background page for progressive web apps.');
   callback();
 };
 
@@ -126,7 +126,7 @@ chrome.runtime.getBackgroundPage = function(callback) {
  * @param {function} opt_callback Callback function on success or error.
  */
 chrome.runtime.openOptionsPage = function(opt_callback) {
-  chrome.caterpillar.setError('Could not create an options page.');
+  caterpillar_.setError('Could not create an options page.');
   if (opt_callback)
     opt_callback();
 };
@@ -141,7 +141,7 @@ chrome.runtime.openOptionsPage = function(opt_callback) {
  * @returns {object} Copy of the Chrome App manifest.
  */
 chrome.runtime.getManifest = function() {
-  return JSON.parse(JSON.stringify(chrome.caterpillar.manifest));
+  return JSON.parse(JSON.stringify(caterpillar_.manifest));
 };
 
 /**

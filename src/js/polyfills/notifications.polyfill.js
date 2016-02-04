@@ -22,7 +22,7 @@
 if (!chrome.notifications)
   chrome.notifications = {};
 
-chrome.caterpillar.notifications = {};
+caterpillar_.notifications = {};
 
 (function() {
 
@@ -182,7 +182,7 @@ chrome.notifications.create = function(opt_notificationId, options,
  * @returns {Promise} Promise resolving to the service worker registration.
  *     Rejects if no registration is available.
  */
-chrome.caterpillar.notifications.getRegistration = function() {
+caterpillar_.notifications.getRegistration = function() {
   if (self.registration)
     return Promise.resolve(self.registration);
 
@@ -210,7 +210,7 @@ chrome.caterpillar.notifications.getRegistration = function() {
  * @returns {Promise} Promise resolving to a Notification.
  */
 function createNotification(title, notificationOptions) {
-  return chrome.caterpillar.notifications.getRegistration()
+  return caterpillar_.notifications.getRegistration()
       .then(function(registration) {
         registration.showNotification(title, notificationOptions);
         return registration.getNotifications({ tag: notificationOptions.tag });

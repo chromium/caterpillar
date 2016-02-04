@@ -20,12 +20,12 @@
 
 'use strict';
 
-// Set up a namespace if one doesn't already exist.
+// Set up a namespace for the polyfills if one doesn't already exist.
 if (!('chrome' in self))
   self.chrome = {};
 
-if (!chrome.caterpillar)
-  chrome.caterpillar = {};
+if (!('caterpillar_' in self))
+  self.caterpillar_ = {};
 
 // We need the chrome.runtime namespace to store errors in.
 if (!chrome.runtime)
@@ -50,7 +50,7 @@ chrome.app = {
  *
  * @param {string} message The error message to set.
  */
-chrome.caterpillar.setError = function(message) {
+self.caterpillar_.setError = function(message) {
   chrome.runtime.lastError = { 'message': message };
 };
 

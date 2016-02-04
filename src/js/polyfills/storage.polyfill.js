@@ -21,7 +21,7 @@
 if (!chrome.storage)
   chrome.storage = {};
 
-chrome.caterpillar.storage = {};
+caterpillar_.storage = {};
 
 (function() {
 
@@ -88,7 +88,7 @@ chrome.storage.StorageArea = class {
     // 4. Input is null; retrieve all key/value pairs.
 
     var handleError = function(err) {
-       chrome.caterpillar.setError('Error retrieving values: ' + err);
+       caterpillar_.setError('Error retrieving values: ' + err);
        callback();
     }
 
@@ -151,7 +151,7 @@ chrome.storage.StorageArea = class {
       opt_keys = null;
     }
     // IndexedDB doesn't support this, so neither does localforage.
-    chrome.caterpillar.setError('getBytesInUse not implemented.');
+    caterpillar_.setError('getBytesInUse not implemented.');
     callback();
   }
 
@@ -183,7 +183,7 @@ chrome.storage.StorageArea = class {
             });
       });
     } catch (e) {
-      chrome.caterpillar.setError('Error setting values: ' + (e.message || e));
+      caterpillar_.setError('Error setting values: ' + (e.message || e));
       if (opt_callback)
         opt_callback();
     }
@@ -198,7 +198,7 @@ chrome.storage.StorageArea = class {
    */
   remove(keys, opt_callback) {
     var handleError = function(err) {
-      chrome.caterpillar.setError('Error removing keys: ' + err);
+      caterpillar_.setError('Error removing keys: ' + err);
       if (opt_callback)
         opt_callback();
     };
@@ -243,7 +243,7 @@ chrome.storage.StorageArea = class {
         });
       });
     } catch (e) {
-      chrome.caterpillar.setError('Error clearing values: ' + (e.message || e));
+      caterpillar_.setError('Error clearing values: ' + (e.message || e));
       if (opt_callback)
         opt_callback();
     }
@@ -290,7 +290,7 @@ chrome.storage.onChanged.addListener = function(callback) {
 /**
  * Resets onChanged event listeners. Used for testing.
  */
-chrome.caterpillar.storage.resetOnChangedListenersForTests = function() {
+caterpillar_.storage.resetOnChangedListenersForTests = function() {
   for (var listener of onChangedListeners) {
     self.removeEventListener('chrome.storage.onChanged', listener);
   }

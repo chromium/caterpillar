@@ -23,7 +23,7 @@ QUnit.test('setError sets an error if runtime is loaded', assert => {
     chrome.runtime = {};
 
   chrome.runtime.lastError = null;
-  chrome.caterpillar.setError('error message');
+  caterpillar_.setError('error message');
   assert.deepEqual(chrome.runtime.lastError,
     { 'message': 'error message' });
   delete chrome.runtime.lastError;

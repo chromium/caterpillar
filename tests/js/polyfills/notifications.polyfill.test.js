@@ -32,7 +32,7 @@ QUnit.module('notifications', {
           return Promise.resolve(this.notifications)
         },
       };
-      chrome.caterpillar.notifications.getRegistration = sandbox.stub()
+      caterpillar_.notifications.getRegistration = sandbox.stub()
           .returns(Promise.resolve(this.registration));
     },
     afterEach: function() {
@@ -228,7 +228,7 @@ QUnit.test('creates a notification with deprecated method', function(assert) {
   // Registration is supported, but showNotification is not.
   this.registration = {
   };
-  chrome.caterpillar.notifications.getRegistration = sandbox.stub()
+  caterpillar_.notifications.getRegistration = sandbox.stub()
       .returns(Promise.resolve(this.registration));
 
   var Notification = this.Notification;

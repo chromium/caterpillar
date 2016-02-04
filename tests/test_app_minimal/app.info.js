@@ -1,3 +1,3 @@
-chrome.caterpillar.manifest = {
-  'name': 'test'
+caterpillar_.manifest = {
+  "name": "test"
 };

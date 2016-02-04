@@ -149,13 +149,13 @@ QUnit.module('storage', {
     beforeEach: function () {
       localforage.setItem('test1', 123);
       localforage.setItem('test2', '456');
-      sandbox.stub(chrome.caterpillar, 'setError');
+      sandbox.stub(caterpillar_, 'setError');
     },
     afterEach: function() {
       sandbox.restore();
       localforage.willError = false;
       localforage.clear();
-      chrome.caterpillar.storage.resetOnChangedListenersForTests();
+      caterpillar_.storage.resetOnChangedListenersForTests();
     }
 });
 
@@ -170,8 +170,8 @@ QUnit.test('get sends errors to caterpillar when retrieving all items',
       var done = assert.async();
       localforage.willError = true;
       chrome.storage.local.get(function() {
-        assert.ok(chrome.caterpillar.setError.calledOnce);
-        assert.equal(chrome.caterpillar.setError.args[0][0],
+        assert.ok(caterpillar_.setError.calledOnce);
+        assert.equal(caterpillar_.setError.args[0][0],
                      'Error retrieving values: iterate error');
         done();
       });
@@ -183,8 +183,8 @@ QUnit.test('get sends errors to caterpillar when retrieving one item',
       var done = assert.async();
       localforage.willError = true;
       chrome.storage.local.get('test1', function() {
-        assert.ok(chrome.caterpillar.setError.calledOnce);
-        assert.equal(chrome.caterpillar.setError.args[0][0],
+        assert.ok(caterpillar_.setError.calledOnce);
+        assert.equal(caterpillar_.setError.args[0][0],
                      'Error retrieving values: get error');
         done();
       });
@@ -196,8 +196,8 @@ QUnit.test('get sends errors to caterpillar when retrieving many items',
       var done = assert.async();
       localforage.willError = true;
       chrome.storage.local.get(['test1', 'test2'], function() {
-        assert.ok(chrome.caterpillar.setError.calledOnce);
-        assert.equal(chrome.caterpillar.setError.args[0][0],
+        assert.ok(caterpillar_.setError.calledOnce);
+        assert.equal(caterpillar_.setError.args[0][0],
                      'Error retrieving values: get error');
         done();
       });
@@ -210,8 +210,8 @@ QUnit.test(
       var done = assert.async();
       localforage.willError = true;
       chrome.storage.local.get({'notakey': 'test'}, function() {
-        assert.ok(chrome.caterpillar.setError.calledOnce);
-        assert.equal(chrome.caterpillar.setError.args[0][0],
+        assert.ok(caterpillar_.setError.calledOnce);
+        assert.equal(caterpillar_.setError.args[0][0],
                      'Error retrieving values: get error');
         done();
       });
@@ -255,7 +255,7 @@ QUnit.test('get can get key value pairs with defaults', function(assert) {
 QUnit.test('getBytesInUse sets an error', function(assert) {
   var done = assert.async();
   chrome.storage.local.getBytesInUse([], function() {
-    assert.equal(chrome.caterpillar.setError.args[0][0],
+    assert.equal(caterpillar_.setError.args[0][0],
                  'getBytesInUse not implemented.');
     done();
   });

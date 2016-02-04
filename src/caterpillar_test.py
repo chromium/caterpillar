@@ -696,7 +696,7 @@ class TestAddAppInfo(TestCaseWithOutputDir):
       app_info_js = app_info_file.read().decode('utf-8')
 
     self.assertEqual(app_info_js, """\
-chrome.caterpillar.manifest = {
+caterpillar_.manifest = {
   "app": {
     "background": {}
   },
