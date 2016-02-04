@@ -687,7 +687,7 @@ class TestAddAppInfo(TestCaseWithOutputDir):
     """Tests add_app_info writes the correct file."""
     chrome_app_manifest = {
       'app': {'background': {}},
-      'name': 'tést app',
+      'name': 'tést app\'',
     }
 
     caterpillar.add_app_info(self.output_path, chrome_app_manifest)
@@ -697,10 +697,10 @@ class TestAddAppInfo(TestCaseWithOutputDir):
 
     self.assertEqual(app_info_js, """\
 chrome.caterpillar.manifest = {
-  'app': {
-    'background': {}
+  "app": {
+    "background": {}
   },
-  'name': 't\\u00e9st app'
+  "name": "t\\u00e9st app'"
 };
 """)
 

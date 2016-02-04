@@ -462,7 +462,7 @@ def add_app_info(output_dir, chrome_app_manifest):
   """
   logging.debug('Generating app info script.')
   js_manifest = json.dumps(chrome_app_manifest, sort_keys=True, indent=2,
-                           separators=(',', ': ')).replace('"', "'")
+                           separators=(',', ': '))
   app_info_js = ('chrome.caterpillar.manifest = {manifest};\n').format(
       manifest=js_manifest)
   app_info_path = os.path.join(output_dir, INFO_SCRIPT_NAME)
