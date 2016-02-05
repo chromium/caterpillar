@@ -755,7 +755,8 @@ def convert_app(input_dir, output_dir, config, captured_warnings, force=False):
   # Finally, generate and write a conversion report.
   abs_report_dir = os.path.join(output_dir, report_dir)
   report.generate_and_write(abs_report_dir, chrome_app_manifest,
-      polyfill_manifests, status, captured_warnings, output_dir)
+      polyfill_manifests, status, captured_warnings, output_dir,
+      boilerplate_dir)
 
   logging.info('Done.')
 

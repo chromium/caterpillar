@@ -367,7 +367,7 @@ def install_bower_dependencies(dependencies, directory):
 
 
 def generate_and_write(report_dir, chrome_app_manifest, apis, status, warnings,
-                       pwa_path):
+                       web_path, boilerplate_dir):
   """Generates a conversion report and writes it to a directory.
 
   Args:
@@ -377,9 +377,10 @@ def generate_and_write(report_dir, chrome_app_manifest, apis, status, warnings,
       dictionaries.
     status: Status representing conversion status of the entire app.
     warnings: List of general warnings logged during conversion.
-    pwa_path: Path to output progressive web app.
+    web_path: Path to output progressive web app.
   """
-  report = generate(chrome_app_manifest, apis, status, warnings, pwa_path)
+  report = generate(chrome_app_manifest, apis, status, warnings, web_path,
+                    boilerplate_dir)
   report_path = os.path.join(report_dir, 'report.html')
   with open(report_path, 'w') as report_file:
     logging.info('Writing conversion report to `%s`.', report_path)

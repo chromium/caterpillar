@@ -158,7 +158,7 @@ TEMPLATE_FULL = jinja2.Template("""
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Caterpillar Conversion Report: {{ ca_manifest.name }}</title>
+    <title>Caterpillar Conversion Report: {{ chrome_app_manifest.name }}</title>
     <link rel="stylesheet" href="report.css">
   <body>
     <div id="report">
