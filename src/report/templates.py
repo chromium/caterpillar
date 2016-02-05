@@ -160,6 +160,7 @@ TEMPLATE_FULL = jinja2.Template("""
     <meta charset="utf-8">
     <title>Caterpillar Conversion Report: {{ chrome_app_manifest.name }}</title>
     <link rel="stylesheet" href="report.css">
+  </head>
   <body>
     <div id="report">
       <h1>
