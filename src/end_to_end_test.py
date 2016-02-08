@@ -73,34 +73,38 @@ class TestEndToEndConvert(caterpillar_test.TestCaseWithTempDir):
         [CATERPILLAR_PATH, 'convert', '-c', self.config_path, self.input_dir,
          self.output_dir])
 
-  @unittest.skip('Test remains broken in this commit.')
+  def get_relative_filepaths(self, directory, ignore_directories=None):
+    """Returns all relative filepaths in a directory and children.
+
+    Args:
+      directory: Path to directory.
+      ignore_directories: Set of directory names to ignore. Any directory with
+        one of these names, at any level of the hierarchy, will be ignored.
+
+    Returns:
+      set of relative filepaths.
+    """
+    if not ignore_directories:
+      ignore_directories = set()
+    filepaths = set()
+    for dirname, dirnames, filenames in os.walk(directory, topdown=True):
+      # Don't descend into ignored directories.
+      for i in range(len(dirnames) - 1, -1, -1):
+        if dirnames[i] in ignore_directories:
+          del dirnames[i]
+
+      for filename in filenames:
+        relpath = os.path.relpath(os.path.join(dirname, filename), directory)
+        filepaths.add(relpath)
+    return filepaths
+
   def test_output_matches_reference(self):
     """Tests that the output matches the reference output."""
-    expected_files = set()
-    for dirname, _, filenames in os.walk(TTS_REFERENCE_PATH):
-      for filename in filenames:
-        relpath = os.path.relpath(
-            os.path.join(dirname, filename), TTS_REFERENCE_PATH)
-        expected_files.add(relpath)
-
-    for dirname, _, filenames in os.walk(self.output_dir):
-      for filename in filenames:
-        relpath = os.path.relpath(
-            os.path.join(dirname, filename), self.output_dir)
-        self.assertIn(relpath, expected_files)
-
-    expected_files = set()
-    for dirname, _, filenames in os.walk(self.output_dir):
-      for filename in filenames:
-        relpath = os.path.relpath(
-            os.path.join(dirname, filename), self.output_dir)
-        expected_files.add(relpath)
-
-    for dirname, _, filenames in os.walk(TTS_REFERENCE_PATH):
-      for filename in filenames:
-        relpath = os.path.relpath(
-            os.path.join(dirname, filename), TTS_REFERENCE_PATH)
-        self.assertIn(relpath, expected_files)
+    expected_files = self.get_relative_filepaths(TTS_REFERENCE_PATH,
+                                                 {'bower_components'})
+    actual_files = self.get_relative_filepaths(self.output_dir,
+                                               {'bower_components'})
+    self.assertEqual(expected_files, actual_files)
 
   def test_all_correct_contents(self):
     """Tests that the content of all non-static output files is expected."""
