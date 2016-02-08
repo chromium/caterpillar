@@ -268,12 +268,19 @@ def format_html(string, apis):
       # standalone API (chrome.superapi.api) and we can just take the top-level
       # status of the API.
       api = match_group
+
+      if api not in apis:
+        return match.group(0)
+
       status = apis[api]['status']
       return '<span class="ca-feature {}">{}</span>'.format(
           status, match.group(0))
 
     api, member = chrome_app.apis.CHROME_API_AND_MEMBER_REGEX.match(
       match.group(0)).groups()
+
+    if api not in apis:
+      return match.group(0)
 
     status = None
     while True:
