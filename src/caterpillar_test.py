@@ -344,12 +344,56 @@ class TestInjectScriptTags(unittest.TestCase):
     """Tests the correct tags are injected if there are many requirements."""
     requirements = ['réq', 'uir', 'edf', 'ile', 's.j', 'ava', 'scr', 'ipt']
     caterpillar.inject_script_tags(
-      self.soup, requirements, 'path', BOILERPLATE_DIR, '')
+        self.soup, requirements, 'path', BOILERPLATE_DIR, '')
     for requirement in requirements:
       self.assertIsNotNone(
           self.soup.find('script',
                          src=os.path.join('path', BOILERPLATE_DIR,
                                           requirement)))
+
+  def test_no_body_yes_html(self):
+    """Tests the correct tags are injected if there is no body tag."""
+    html = """\
+<!DOCTYPE html>
+<html>
+<h1>
+ Hello, Wo®ld!
+</h1>
+</html>"""
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    requirements = ['réq', 'uir']
+    caterpillar.inject_script_tags(
+        soup, requirements, 'path', BOILERPLATE_DIR, '')
+    self.assertEqual(re.sub(r'\s+', ' ', unicode(soup)),
+                     re.sub(r'\s+', ' ', """\
+<!DOCTYPE html>
+<html>
+<h1>
+ Hello, Wo®ld!
+</h1>
+<script src="path/bóilerplate dir/réq"></script><script
+    src="path/bóilerplate dir/uir"></script></html>"""))
+
+  def test_no_body_or_html(self):
+    """Tests the correct tags are injected if there is no body or html tag."""
+    html = """\
+<!DOCTYPE html>
+<h1>
+ Hello, Wo®ld!
+</h1>
+"""
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    requirements = ['réq', 'uir']
+    caterpillar.inject_script_tags(
+        soup, requirements, 'path', BOILERPLATE_DIR, '')
+    self.assertEqual(re.sub(r'\s+', ' ', unicode(soup)),
+                     re.sub(r'\s+', ' ', """\
+<!DOCTYPE html>
+<h1>
+ Hello, Wo®ld!
+</h1>
+<script src="path/bóilerplate dir/réq"></script><script
+    src="path/bóilerplate dir/uir"></script>"""))
 
   def test_many_requirements_tag_order(self):
     """Tests tags are injected in order."""

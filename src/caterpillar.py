@@ -271,7 +271,13 @@ def inject_script_tags(soup, required_js_paths, root_path, boilerplate_dir,
     path = os.path.join(root_path, boilerplate_dir, script_path)
     script = soup.new_tag('script', src=path)
     if first_script is None:
-      soup.body.append(script)
+      target = soup.body
+      if not target:
+        if soup.html:
+          target = soup.html
+        else:
+          target = soup
+      target.append(script)
     else:
       first_script.insert_before(script)
     first_script = script
