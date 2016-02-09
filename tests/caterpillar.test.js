@@ -18,13 +18,27 @@
 
 'use strict';
 
-QUnit.test('setError sets an error if runtime is loaded', assert => {
-  if (!chrome.runtime)
-    chrome.runtime = {};
-
+QUnit.test('setError sets an error', assert => {
   chrome.runtime.lastError = null;
   caterpillar_.setError('error message');
   assert.deepEqual(chrome.runtime.lastError,
     { 'message': 'error message' });
   delete chrome.runtime.lastError;
+});
+
+QUnit.test('chrome namespace is defined', assert => {
+  assert.ok('chrome' in self);
+});
+
+QUnit.test('caterpillar_ namespace is defined', assert => {
+  assert.ok('caterpillar_' in self);
+});
+
+QUnit.test('chrome.runtime namespace is defined', assert => {
+  assert.ok('runtime' in chrome);
+});
+
+QUnit.test('chrome.app.runtime.onLaunched.addListener is stubbed', assert => {
+  assert.expect(0);
+  chrome.app.runtime.onLaunched.addListener(function() {});
 });

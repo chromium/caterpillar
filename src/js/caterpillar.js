@@ -13,10 +13,12 @@
 // limitations under the License.
 
 /**
- * Common utilities and types for Caterpillar.
+ * Common utilities and namespaces for Caterpillar.
  *
  * Must be included before any Caterpillar polyfills.
  */
+
+(function() {
 
 'use strict';
 
@@ -35,22 +37,26 @@ if (!chrome.runtime)
 // method to launch the main window. Stubbing it means that background scripts
 // that launch the main window can be re-used elsewhere without causing script
 // errors.
-chrome.app = {
-  runtime: {
+
+// chrome.app is always defined in Chrome, and Chrome will overwrite it if it is
+// replaced outright.
+if (!chrome.app)
+  chrome.app = {};
+
+if (!chrome.app.runtime) {
+  chrome.app.runtime = {
     onLaunched: {
       addListener: function() {},
     }
-  }
-};
-
-(function() {
+  };
+}
 
 /**
  * Sets an error message in chrome.runtime.lastError.
  *
  * @param {string} message The error message to set.
  */
-self.caterpillar_.setError = function(message) {
+caterpillar_.setError = function(message) {
   chrome.runtime.lastError = { 'message': message };
 };
 
