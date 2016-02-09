@@ -24,6 +24,7 @@ progressive web app.
 from __future__ import print_function, division, unicode_literals
 
 import argparse
+import errno
 import json
 import logging
 import os
@@ -112,6 +113,12 @@ importScripts('{boilerplate_dir}/sw_static.js');
 """
 
 
+class CaterpillarError(Exception):
+  """Represents an error occurring during conversion."""
+
+  pass
+
+
 def setup_output_dir(input_dir, output_dir, boilerplate_dir, report_dir,
                      force=False):
   """Sets up the output web app directory tree.
@@ -129,22 +136,32 @@ def setup_output_dir(input_dir, output_dir, boilerplate_dir, report_dir,
     force: Whether to force overwrite existing output files. Default is False.
 
   Raises:
-    OSError: Input Chrome App directory does not exist.
-    OSError: Output web app directory already exists.
+    CaterpillarError: Input Chrome App directory does not exist or is not
+      a directory.
+    CaterpillarError: Output web app directory already exists.
   """
   # Remove the output directory if it already exists.
   if force:
     logging.debug('Removing output directory tree `%s`.', output_dir)
     shutil.rmtree(output_dir, ignore_errors=True)
   elif os.path.exists(output_dir):
-    # OSError is consistent with the behaviour of shutil, which raises an
-    # OSError in this circumstance.
-    raise OSError('Output directory already exists.')
+    raise CaterpillarError('Output directory already exists.')
 
   # Copy all files across from the Chrome App.
   logging.debug('Copying input tree `%s` to output tree `%s`.', input_dir,
                 output_dir)
-  shutil.copytree(input_dir, output_dir)
+  try:
+    shutil.copytree(input_dir, output_dir)
+  except OSError as e:
+    if e.errno == errno.ENOTDIR:
+      raise CaterpillarError(
+          'Input `{}` is not a directory.'.format(input_dir))
+
+    if e.errno == errno.ENOENT:
+      raise CaterpillarError(
+          'Input directory `{}` does not exist.'.format(input_dir))
+
+    raise e
 
   # Set up the boilerplate directory.
   boilerplate_dir = os.path.join(output_dir, boilerplate_dir)
@@ -615,7 +632,7 @@ def convert_app(input_dir, output_dir, config, captured_warnings, force=False):
 
   try:
     setup_output_dir(input_dir, output_dir, boilerplate_dir, report_dir, force)
-  except OSError as e:
+  except CaterpillarError as e:
     logging.error(e.message)
     return
 

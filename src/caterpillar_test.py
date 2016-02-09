@@ -33,6 +33,7 @@ import tempfile
 import unittest
 
 import bs4
+import mock
 
 import caterpillar
 
@@ -131,10 +132,31 @@ class TestSetupOutputDir(TestCaseWithTempDir):
   def test_setup_output_dir_force_false(self):
     """Tests that force=False disallows overwriting of an existing directory."""
     os.mkdir(self.output_path)
-    with self.assertRaises(OSError) as e:
+    with self.assertRaises(caterpillar.CaterpillarError) as e:
       caterpillar.setup_output_dir(
           MINIMAL_PATH, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
     self.assertEqual(e.exception.message, 'Output directory already exists.')
+
+  def test_input_dir_does_not_exist(self):
+    """Tests that an error is raised if the input directory does not exist."""
+    input_dir = os.path.join(self.temp_path, 'not a directory')
+    with self.assertRaises(caterpillar.CaterpillarError) as e:
+      caterpillar.setup_output_dir(
+          input_dir, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
+    self.assertEqual(e.exception.message,
+        'Input directory `{}` does not exist.'.format(input_dir))
+
+  def test_input_not_a_directory(self):
+    """Tests that an error is raised if the input is not a directory."""
+    input_path = os.path.join(self.temp_path, 'a file')
+    with open(input_path, 'w') as _:
+      pass
+
+    with self.assertRaises(caterpillar.CaterpillarError) as e:
+      caterpillar.setup_output_dir(
+          input_path, self.output_path, BOILERPLATE_DIR, REPORT_DIR)
+    self.assertEqual(e.exception.message,
+        'Input `{}` is not a directory.'.format(input_path))
 
   def test_setup_output_dir_force_true_copies_all_files(self):
     """Tests that force=True allows overwriting of an existing directory."""
@@ -747,6 +769,24 @@ caterpillar_.manifest = {
   "name": "t\\u00e9st app'"
 };
 """)
+
+
+class TestConvertApp(TestCaseWithTempDir):
+  """Tests convert_app."""
+
+  @mock.patch('caterpillar.logging')
+  def test_error_on_directory_exists(self, mock_logging):
+    """Tests that an error is logged if the output directory exists."""
+    input_dir = 'input 📂'
+    output_dir = 'output 📂'
+    config = {
+      'boilerplate_dir': 'boilerplate 📂',
+      'report_dir': 'report 📂',
+    }
+    output_path = os.path.join(self.temp_path, output_dir)
+    os.mkdir(output_path)
+    caterpillar.convert_app(input_dir, output_path, config, [], force=False)
+    mock_logging.error.assert_called_with('Output directory already exists.')
 
 
 if __name__ == '__main__':
