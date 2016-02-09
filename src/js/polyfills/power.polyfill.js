@@ -17,13 +17,13 @@
  * stop apps from running due to errors.
  */
 
+(function() {
+
 'use strict';
 
 // Set up a namespace for the stub if necessary.
 if (!chrome.power)
   chrome.power = {};
-
-(function() {
 
 /**
  * Describes the degree to which power management should be disabled.
@@ -34,19 +34,18 @@ chrome.power.Level = {
 };
 
 /**
- * Requests that power management be temporarily disabled.
+ * Requests that power management be temporarily disabled. Does nothing.
  *
  * @param {chrome.power.Level} Degree to which power management should be
  *     disabled.
  */
 chrome.power.requestKeepAwake = function(level) {
-  console.warn('requestKeepAwake not implemented.');
 };
 
 /**
- * Releases a request previously made via requestKeepAwake().
+ * Releases a request previously made via requestKeepAwake(). Does nothing.
  */
-chrome.power.releaseKeepAwake = function(level) {
+chrome.power.releaseKeepAwake = function() {
 };
 
 }).call(this);
