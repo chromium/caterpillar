@@ -60,4 +60,25 @@ caterpillar_.setError = function(message) {
   chrome.runtime.lastError = { 'message': message };
 };
 
+// Disable web features that are disabled in Chrome Apps. See
+// https://developer.chrome.com/apps/app_deprecated. These functions intend to
+// match the behaviour of Chrome Apps when the disabled functions are called.
+var logNotAvailable = function(name) {
+  throw new Error(name + '() is not available in converted apps.');
+}
+self.alert = logNotAvailable.bind(null, 'alert');
+self.confirm = logNotAvailable.bind(null, 'confirm');
+self.prompt = logNotAvailable.bind(null, 'prompt');
+self.showModalDialog = logNotAvailable.bind(null, 'showModalDialog');
+if ('document' in self) {
+  document.cookie = '';
+  document.close = logNotAvailable.bind(null, 'document.close');
+  document.open = logNotAvailable.bind(null, 'document.open');
+  document.write = logNotAvailable.bind(null, 'document.write');
+
+  // Disable user text selection.
+  document.addEventListener('selectstart', function() { return false; });
+}
+delete self.localStorage;
+
 }).call(this);

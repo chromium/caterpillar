@@ -42,3 +42,22 @@ QUnit.test('chrome.app.runtime.onLaunched.addListener is stubbed', assert => {
   assert.expect(0);
   chrome.app.runtime.onLaunched.addListener(function() {});
 });
+
+QUnit.test('Appropriate web functions are disabled', assert => {
+  assert.throws(alert,
+      new Error('alert() is not available in converted apps.'));
+  assert.throws(confirm,
+      new Error('confirm() is not available in converted apps.'));
+  assert.throws(document.close,
+      new Error('document.close() is not available in converted apps.'));
+  assert.throws(document.open,
+      new Error('document.open() is not available in converted apps.'));
+  assert.throws(document.write,
+      new Error('document.write() is not available in converted apps.'));
+  assert.throws(showModalDialog,
+      new Error('showModalDialog() is not available in converted apps.'));
+});
+
+QUnit.test('localStorage disabled', assert => {
+  assert.notOk('localStorage' in self);
+});
