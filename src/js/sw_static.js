@@ -16,6 +16,26 @@
  * Generic service worker code.
  */
 
+(function() {
+
+'use strict';
+
+/**
+ * Performs a cache lookup on a request, ignoring GET parameters.
+ *
+ * @param {Cache} cache Cache to lookup the request in.
+ * @param {Request} request Request to lookup.
+ * @param {object=} opt_options Options to pass to Cache.match.
+ * @returns {Promise}
+ */
+var matchIgnoreParams = function(cache, request, opt_options) {
+  var paramIndex = request.url.indexOf('?');
+  if (paramIndex !== -1)
+    request = new Request(request.url.substring(0, paramIndex), request);
+
+  return cache.match(request, opt_options);
+};
+
 /**
  * Service worker activation event handler.
  *
@@ -23,7 +43,7 @@
  *
  * @param {event} e Activation event.
  */
-onActivate = function(e) {
+var onActivate = function(e) {
   // Delete old versions of caches.
   var currentCaches = Object.keys(CACHES).map(k => CACHES[k]);
   e.waitUntil(caches.keys().then(cacheNames => Promise.all(
@@ -44,9 +64,9 @@ self.addEventListener('activate', onActivate);
  * @param {event} e Fetch event.
  * @return {response} Fetch response.
  */
-onFetch = function(e) {
+var onFetch = function(e) {
   e.respondWith(caches.open(CACHES['app']).then(cache =>
-    cache.match(e.request).then(response => {
+    matchIgnoreParams(cache, e.request).then(response => {
       if (response)
         return response;
 
@@ -70,10 +90,12 @@ self.addEventListener('fetch', onFetch);
  *
  * @param {event} e Install event.
  */
-onInstall = function(e) {
+var onInstall = function(e) {
   e.waitUntil(
     caches.open(CACHES['app'])
           .then(cache => cache.addAll(CACHED_FILES)));
   console.debug('Installed service worker.');
 };
 self.addEventListener('install', onInstall);
+
+}).call(this);
