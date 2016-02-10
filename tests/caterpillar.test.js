@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * Tests for the polyfill for Chrome Apps' runtime API.
+ * Tests for Caterpillar common code.
  */
 
 'use strict';
