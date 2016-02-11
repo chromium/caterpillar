@@ -228,7 +228,7 @@ def manifest_warnings(manifest, apis):
     full warning text}.
   """
   warnings = []
-  for warning in manifest['warnings']:
+  for warning in manifest.get('warnings', []):
     # Warnings can be either strings, objects containing a string, or objects
     # containing a list of strings.
     if isinstance(warning, basestring):
@@ -286,7 +286,7 @@ def format_html(string, apis):
     while True:
       # Check if the member has a status; if it does, use that, otherwise jump
       # to the parent member.
-      for warning in apis[api]['warnings']:
+      for warning in apis[api].get('warnings', []):
         if member == warning:
           status = Status.NONE
           break

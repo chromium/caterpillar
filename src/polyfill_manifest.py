@@ -38,9 +38,6 @@ def default(api):
   return {
     'name': api,
     'status': 'none',
-    'coverage': 0.00,
-    'dependencies': [],
-    'warnings': [],
   }
 
 
