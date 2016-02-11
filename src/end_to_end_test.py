@@ -22,8 +22,10 @@ from __future__ import print_function, division, unicode_literals
 import difflib
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 
 import caterpillar
@@ -42,36 +44,42 @@ TTS_REFERENCE_PATH = os.path.join(
 class TestEndToEndConvert(caterpillar_test.TestCaseWithTempDir):
   """Converts an entire Chrome App and checks the output is correct."""
 
-  def setUp(self):
+  @classmethod
+  def setUpClass(cls):
     """Converts a test Chrome App."""
-    super(TestEndToEndConvert, self).setUp()
-    self.input_dir = TTS_PATH
-    self.output_dir = os.path.join(self.temp_path, 'tts test output')
-    self.config_path = os.path.join(self.temp_path, 'config.json')
+    cls.temp_path = tempfile.mkdtemp()
+    cls.input_dir = TTS_PATH
+    cls.output_dir = os.path.join(cls.temp_path, 'tts test output')
+    cls.config_path = os.path.join(cls.temp_path, 'config.json')
 
     encoding = sys.getfilesystemencoding()
 
-    self.boilerplate_dir = 'caterpillar-📂'
-    self.report_dir = 'report ✓✓✓'
-    self.start_url = 'ttstest.html'
+    cls.boilerplate_dir = 'caterpillar-📂'
+    cls.report_dir = 'report ✓✓✓'
+    cls.start_url = 'ttstest.html'
     config_input = '{}\n{}\n{}\n'.format(
-        self.boilerplate_dir, self.report_dir, self.start_url).encode(encoding)
+        cls.boilerplate_dir, cls.report_dir, cls.start_url).encode(encoding)
 
     # Generate a config file using Caterpillar.
     process = subprocess.Popen(
-        [CATERPILLAR_PATH, 'config', '-i', self.config_path],
+        [CATERPILLAR_PATH, 'config', '-i', cls.config_path],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE)
     process.communicate(input=config_input)
     if process.wait():
       raise subprocess.CalledProcessError()
 
-    if not os.path.exists(self.config_path):
+    if not os.path.exists(cls.config_path):
       raise RuntimeError('Configuration file generation failed.')
 
     output = subprocess.check_output(
-        [CATERPILLAR_PATH, 'convert', '-c', self.config_path, self.input_dir,
-         self.output_dir])
+        [CATERPILLAR_PATH, 'convert', '-c', cls.config_path, cls.input_dir,
+         cls.output_dir])
+
+  @classmethod
+  def tearDownClass(cls):
+    """Deletes the converted Chrome App."""
+    shutil.rmtree(cls.temp_path)
 
   def get_relative_filepaths(self, directory, ignore_directories=None):
     """Returns all relative filepaths in a directory and children.
