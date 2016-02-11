@@ -13,30 +13,30 @@
 // limitations under the License.
 
 /**
- * Polyfill for Chrome Apps' TTS API.
+ * Polyfill for the Chrome Apps TTS API.
  */
 
 'use strict';
 
+(function() {
+
 if (!chrome.tts)
   chrome.tts = {};
-
-(function() {
 
 /**
  * An event from the TTS engine to communicate the status of an utterance.
  */
 chrome.tts.TtsEvent = class {
   /**
-   * @param {string} type The type can be 'start' as soon as speech has
-   *     started, 'word' when a word boundary is reached, 'sentence' when a
-   *     sentence boundary is reached, 'marker' when an SSML mark element is
-   *     reached, 'end' when the end of the utterance is reached, 'end' when the
-   *     end of the utterance is reached, 'interrupted' when the utterance is
-   *     stopped or interrupted before reaching the end, 'cancelled' when it's
-   *     removed from the queue before ever being synthesized, or 'error' when
-   *     any other error occurs. When pausing speech, a 'pause' event is fired
-   *     if a particular utterance is paused in the middle, and 'resume' if an
+   * @param {string} type The type can be 'start' as soon as speech has started,
+   *     'word' when a word boundary is reached, 'sentence' when a sentence
+   *     boundary is reached, 'marker' when an SSML mark element is reached,
+   *     'end' when the end of the utterance is reached, 'end' when the end of
+   *     the utterance is reached, 'interrupted' when the utterance is stopped
+   *     or interrupted before reaching the end, 'cancelled' when it's removed
+   *     from the queue before ever being synthesized, or 'error' when any other
+   *     error occurs. When pausing speech, a 'pause' event is fired if a
+   *     particular utterance is paused in the middle, and 'resume' if an
    *     utterance resumes speech. Note that pause and resume events may not
    *     fire if speech is paused in-between utterances.
    * @param {double=} opt_charIndex The index of the current character in the
@@ -68,7 +68,7 @@ chrome.tts.TtsVoice = class {
    *     this voice is capable of sending.
    */
   constructor(opt_voiceName, opt_lang, opt_gender, opt_remote, opt_extensionId,
-    opt_eventTypes) {
+              opt_eventTypes) {
     this.voiceName = opt_voiceName;
     this.lang = opt_lang;
     this.gender = opt_gender;
@@ -83,13 +83,13 @@ chrome.tts.TtsVoice = class {
  *
  * @param {string} utterance The text to speak.
  * @param {object=} opt_options The speech options.
- * @param {boolean=} opt_options.enqueue=false If true, enqueues this
- *     utterance if TTS is already in progress. If false, interrupts any current
- *     speech and flushes the speech queue before speaking this new utterance.
+ * @param {boolean=} opt_options.enqueue=false If true, enqueues this utterance
+ *     if TTS is already in progress. If false, interrupts any current speech
+ *     and flushes the speech queue before speaking this new utterance.
  * @param {string=} opt_options.voiceName The name of the voice to use for
  *     synthesis. If empty, uses any available voice.
- * @param {string=} opt_options.lang The language to be used for synthesis,
- *     in the form *language-region*. Examples: 'en', 'en-US', 'zh-CN'.
+ * @param {string=} opt_options.lang The language to be used for synthesis, in
+ *     the form *language-region*. Examples: 'en', 'en-US', 'zh-CN'.
  * @param {double=} opt_options.rate=1.0 Speaking rate relative to the default
  *     rate of this voice. Must be in range [0.1, 10.0].
  * @param {double=} opt_options.pitch=1.0 Speaking pitch in range [0.0, 2.0].
@@ -161,12 +161,6 @@ chrome.tts.speak = function(utterance, opt_options, opt_callback) {
         // resume -> resume
         // mark -> marker
         // boundary -> word || sentence
-        // TtsEvents with no SpeechSynthesisEvent equivalent:
-        // interrupted, cancelled
-        // These are kind of both bundled up in SpeechSynthesis.cancel, so
-        // there's not a lot we can do about them.
-        if (event.type === 'interrupted' || event.type === 'cancelled')
-          return;
   
         var type = event.type;
         if (type === 'mark') {
@@ -193,20 +187,12 @@ chrome.tts.speak = function(utterance, opt_options, opt_callback) {
     }
   }
 
-  if (opt_options) {
-    // Warn for options that aren't implemented in the polyfill.
-    var notImplementedOptions = ['extensionId', 'gender', 'requiredEventTypes',
-                                 'desiredEventTypes'];
-    for (var i = 0; i < notImplementedOptions.length; i++) {
-      if (notImplementedOptions[i] in opt_options) {
-        console.warn('TTS speak option "' + notImplementedOptions[i] +
-                     '" not implemented in polyfill.');
-      }
-    }
-  }
+  // Errors need to be caught and stored in chrome.runtime.lastError.
+  msg.addEventListener('error', function(event) {
+    caterpillar_.setError('Error speaking: ' + event.error);
+  });
 
   speechSynthesis.speak(msg);
-  // TODO(alger): Catch errors and store in chrome.runtime.lastError.
 
   // callback option.
   if (opt_callback)
@@ -252,15 +238,13 @@ chrome.tts.isSpeaking = function(opt_callback) {
 /**
  * Convert a SpeechSynthesisVoice into a TtsVoice.
  *
- * Only used internally by the polyfill.
- *
  * @param {SpeechSynthesisVoice} voice Voice to convert.
  *
  * @returns chrome.tts.TtsVoice
  */
 var toTtsVoice = function(voice) {
   return new chrome.tts.TtsVoice(voice.name, voice.lang, null,
-    !voice.localService, null, null);
+                                 !voice.localService, null, null);
 };
 
 /**
