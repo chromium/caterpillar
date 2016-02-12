@@ -125,7 +125,7 @@ class TestProcessUsage(unittest.TestCase):
         '// keep awakes\n'
             '<span class="ca-feature none">'
             'chrome.power.requestKeepAwake</span>();\n'
-            '// the user is now awake\nnotAChromeAppCall();',
+            '// the user is now awake\nnotAChromeAppCall();\n',
         0)])
     self.assertEqual(apis['app.runtime']['usage'],
       [('my scr\xedpt.js',
