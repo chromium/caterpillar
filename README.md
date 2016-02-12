@@ -26,6 +26,37 @@ web app `my-web-app/` and generate a conversion report inside a subdirectory of
 
 For more detailed documentation, see [the manual](docs/manual.md).
 
+## Running Tests
+
+Running all tests:
+
+```bash
+./run_tests.py
+```
+
+Running Python tests only:
+
+```bash
+./run_tests.py py
+```
+
+Running specific Python tests:
+
+```bash
+./run_tests.py py module_test
+./run_tests.py py module_test.TestClass
+./run_tests.py py module_test.TestClass.test_function
+```
+
+Running JavaScript tests only:
+
+```bash
+./run_tests.py js
+```
+
+The JavaScript tests assume you have Chrome and Firefox (version 45 or greater).
+If you want to run the tests on different browsers, edit karma.conf.js.
+
 ## Disclaimer
 
 This is not an official Google product (experimental or otherwise), it is just

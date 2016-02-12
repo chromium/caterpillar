@@ -34,14 +34,14 @@ module.exports = function(config) {
     colors: true,
     logLevel: config.LOG_INFO,
     customLaunchers: {
-      FirefoxDeveloperFlagged: {
-        base: 'FirefoxDeveloper',
+      FirefoxFlagged: {
+        base: 'Firefox',
         prefs: {
           'media.webspeech.synth.enabled': true
         }
       }
     },
-    browsers: ['Chrome', 'FirefoxDeveloperFlagged'],
+    browsers: ['Chrome', 'FirefoxFlagged'],
     concurrency: Infinity,
     client: {
       captureConsole: true,
