@@ -13,16 +13,34 @@
 // limitations under the License.
 
 /**
- * Polyfill for Chrome Apps' runtime API.
+ * Polyfill for the Chrome Apps runtime API.
  */
 
 'use strict';
+
+(function() {
 
 // Add namespaces for the polyfill if they don't already exist.
 if (!chrome.runtime)
   chrome.runtime = {};
 
-(function() {
+/**
+ * Not implemented.
+ */
+chrome.runtime.Port = class {
+  constructor() {
+    throw new Error('Port not implemented.');
+  }
+};
+
+/**
+ * Not implemented.
+ */
+chrome.runtime.MessageSender = class {
+  constructor() {
+    throw new Error('MessageSender not implemented.');
+  }
+};
 
 /**
  * The operating system the browser is running on.
@@ -123,7 +141,7 @@ chrome.runtime.getBackgroundPage = function(callback) {
  *
  * Always sets an error in lastError since this isn't an extension.
  *
- * @param {function} opt_callback Callback function on success or error.
+ * @param {function=} opt_callback Callback function on success or error.
  */
 chrome.runtime.openOptionsPage = function(opt_callback) {
   caterpillar_.setError('Could not create an options page.');
@@ -145,13 +163,20 @@ chrome.runtime.getManifest = function() {
 };
 
 /**
+ * Not implemented.
+ */
+chrome.runtime.getURL = function() {
+  throw new Error('getURL not implemented.');
+};
+
+/**
  * Sets the URL to be visited upon uninstallation.
  *
  * Does nothing but call the callback, since there is no uninstallation event
  * for a progressive web app.
  *
  * @param {string} url URL to visit upon uninstallation.
- * @param {function} opt_callback Callback function on success or error.
+ * @param {function=} opt_callback Callback function on success or error.
  */
 chrome.runtime.setUninstallURL = function(url, opt_callback) {
   if (opt_callback)
@@ -200,6 +225,20 @@ chrome.runtime.connectNative = function() {
 };
 
 /**
+ * Not implemented.
+ */
+chrome.runtime.sendMessage = function() {
+  throw new Error('sendMessage not implemented.');
+};
+
+/**
+ * Not implemented.
+ */
+chrome.runtime.sendNativeMessage = function() {
+  throw new Error('sendNativeMessage not implemented.');
+};
+
+/**
  * Gets information about the current operating system.
  *
  * @param {function} callback Function taking PlatformInfo.
@@ -207,8 +246,8 @@ chrome.runtime.connectNative = function() {
 chrome.runtime.getPlatformInfo = function(callback) {
   // Here, we use platform.js to guess a reasonable value for the platform
   // information expected by Chrome Apps. This is pretty hard since we can't
-  // make the same guarantees a Chrome App can about the open web, so this is
-  // a "best guess".
+  // make the same guarantees a Chrome App can about the open web, so this is a
+  // "best guess".
 
   // We need to guess: android, cros, linux, mac, openbsd, win
   // We also need to guess: x86-64, x86-32, arm
@@ -241,22 +280,75 @@ chrome.runtime.getPackageDirectoryEntry = function() {
   throw new Error('getPackageDirectoryEntry not implemented.');
 };
 
-// TODO(alger): Implement or stub Port.
-// TODO(alger): Implement or stub MessageSender.
-// TODO(alger): Implement or stub sendMessage.
-// TODO(alger): Implement or stub getURL.
-// TODO(alger): Implement or stub sendMessage.
-// TODO(alger): Implement or stub sendNativeMessage.
-// TODO(alger): Implement or stub onStartup.
-// TODO(alger): Implement or stub onInstalled.
-// TODO(alger): Implement or stub onSuspend.
-// TODO(alger): Implement or stub onSuspendCanceled.
-// TODO(alger): Implement or stub onUpdateAvailable.
-// TODO(alger): Implement or stub onBrowserUpdateAvailable.
-// TODO(alger): Implement or stub onConnect.
-// TODO(alger): Implement or stub onConnectExternal.
-// TODO(alger): Implement or stub onMessage.
-// TODO(alger): Implement or stub onMessageExternal.
-// TODO(alger): Implement or stub onRestartRequired.
+/**
+ * Not implemented events. All addListener methods for not implemented events
+ * have been stubbed in this polyfill.
+ */
+
+chrome.runtime.onStartup = {
+  addListener: function() {
+    throw new Error('onStartup not implemented.');
+  }
+};
+
+chrome.runtime.onInstalled = {
+  addListener: function() {
+    throw new Error('onInstalled not implemented.');
+  }
+};
+
+chrome.runtime.onSuspend = {
+  addListener: function() {
+    throw new Error('onSuspend not implemented.');
+  }
+};
+
+chrome.runtime.onSuspendCanceled = {
+  addListener: function() {
+    throw new Error('onSuspendCanceled not implemented.');
+  }
+};
+
+chrome.runtime.onUpdateAvailable = {
+  addListener: function() {
+    throw new Error('onUpdateAvailable not implemented.');
+  }
+};
+
+chrome.runtime.onBrowserUpdateAvailable = {
+  addListener: function() {
+    throw new Error('onBrowserUpdateAvailable not implemented.');
+  }
+};
+
+chrome.runtime.onConnect = {
+  addListener: function() {
+    throw new Error('onConnect not implemented.');
+  }
+};
+
+chrome.runtime.onConnectExternal = {
+  addListener: function() {
+    throw new Error('onConnectExternal not implemented.');
+  }
+};
+
+chrome.runtime.onMessage = {
+  addListener: function() {
+    throw new Error('onMessage not implemented.');
+  }
+};
+
+chrome.runtime.onMessageExternal = {
+  addListener: function() {
+    throw new Error('onMessageExternal not implemented.');
+  }
+};
+
+chrome.runtime.onRestartRequired = {
+  addListener: function() {
+    throw new Error('onRestartRequired not implemented.');
+  }
+};
 
 }).call(this);
